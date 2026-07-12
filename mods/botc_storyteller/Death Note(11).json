@@ -1,0 +1,68 @@
+[
+  {
+    "id": "_meta",
+    "name": "Death Note",
+    "author": "opfromthestart",
+    "bootlegger": [
+      "Minion count is arbitrary.",
+      "L is always an in-play character.",
+      "If L dies before getting a bingo, the Amnesiac's ability becomes stronger.",
+      "If the win condition of either team changes, this will be announced on day 1."
+    ]
+  },
+  {
+    "id": "b6b9h",
+    "name": "Amnesiac",
+    "team": "demon",
+    "ability": "You do not know what your ability is. Each day, choose between asking a question or receiving one true and one false statement about your ability.",
+    "firstNight": 0,
+    "otherNight": 0,
+    "setup": false
+  },
+  {
+    "id": "gs4vi",
+    "name": "L",
+    "team": "townsfolk",
+    "ability": "Each day, privately guess what the Amnesiac's ability is: you learn how accurate you are. The Amnesiac learns what you guess the following night. If you get a bingo, you and the Amnesiac learn each other.",
+    "setup": false
+  },
+  "noble",
+  "chef",
+  "artist",
+  "savant",
+  "fisherman",
+  "dreamer",
+  "flowergirl",
+  "chambermaid",
+  "mathematician",
+  "bountyhunter",
+  "sailor",
+  "monk",
+  "mutant",
+  "lunatic",
+  "drunk",
+  "cerenovus",
+  "harpy",
+  "bootlegger",
+  "poppygrower",
+  "damsel",
+  "assassin",
+  "witch",
+  {
+    "id": "u7lx6",
+    "name": "?",
+    "team": "loric",
+    "ability": "You do not know your character",
+    "setup": true,
+    "special": [
+      {
+        "type": "selection",
+        "name": "bag-duplicate"
+      }
+    ]
+  },
+  "goblin",
+  "eviltwin",
+  "vizier",
+  "tinker"
+]
