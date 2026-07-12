@@ -30,7 +30,7 @@ function botc.show_marker_formspec(viewer, target)
     fs = fs .. "field[0.5,5.9;7,0.8;custom_marker;Custom;]"
     fs = fs .. "button[3,5.9;2,0.8;marker_custom;Set Custom]"
     fs = fs .. "button_exit[2,6.7;3,0.8;close;Close]"
-    minetest.show_formspec(viewer, "botc:marker_" .. target, fs)
+    minetest.show_formspec(viewer, "botc_storyteller:marker_" .. target, fs)
 end
 
 function botc.show_player_list_formspec(viewer, formname_prefix)
@@ -44,9 +44,7 @@ function botc.show_player_list_formspec(viewer, formname_prefix)
         minetest.chat_send_player(viewer, "No players online")
         return
     end
-    local fs = "size[6,10]label[0.5,0.5;Select a player:]textlist[0.5,1;5,8;players;" .. table.concat(items, ",") .. "]"
-    fs = fs .. "button[0.5,9.2;2,0.8;select;Select]button[3,9.2;2,0.8;cancel;Cancel]"
-    fs = fs .. "field_close_on_enter[players;false]"
+    local fs = "size[6,8]label[0.5,0.3;Select a player (double-click):]textlist[0.5,1;5,7;players;" .. table.concat(items, ",") .. "]"
     minetest.show_formspec(viewer, formname_prefix .. "_list", fs)
 end
 
@@ -59,7 +57,7 @@ function botc.show_notebook_formspec(viewer, target)
     fs = fs .. "button[3.5,4.2;2.5,0.8;note_clear;Clear]"
     fs = fs .. "button_exit[6.5,4.2;1.5,0.8;close;Close]"
     fs = fs .. "field_close_on_enter[note_text;false]"
-    minetest.show_formspec(viewer, "botc:notebook_" .. target, fs)
+    minetest.show_formspec(viewer, "botc_storyteller:notebook_" .. target, fs)
 end
 
 local WAND_TEXTURES = {
@@ -87,7 +85,7 @@ end
 local nomination_step1 = {} -- { [username] = nominator }
 
 -- Script wand
-minetest.register_tool("botc:script_wand", {
+minetest.register_tool("botc_storyteller:script_wand", {
     description = "Script Wand",
     inventory_image = WAND_TEXTURES.script_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -108,7 +106,7 @@ minetest.register_tool("botc:script_wand", {
         fs = fs .. table.concat(items, ",") .. "]"
         fs = fs .. "button[0.5,9.2;3,1;assign;Assign]button[4,9.2;3,1;cancel;Cancel]"
         fs = fs .. "field_close_on_enter[roles;false]"
-        minetest.show_formspec(name, "botc:script_wand_" .. target, fs)
+        minetest.show_formspec(name, "botc_storyteller:script_wand_" .. target, fs)
         return itemstack
     end,
     on_place = function(itemstack, user, pointed_thing)
@@ -116,14 +114,14 @@ minetest.register_tool("botc:script_wand", {
     end,
 })
 
-minetest.register_tool("botc:nomination_wand", {
+minetest.register_tool("botc_storyteller:nomination_wand", {
     description = "Nomination Wand",
     inventory_image = WAND_TEXTURES.nomination_wand,
     on_use = function(itemstack, user, pointed_thing)
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
-        if botc.ST.phase ~= "day" then
-            minetest.chat_send_player(name, "Nominations only during day phase")
+        if botc.ST.phase ~= "evening" then
+            minetest.chat_send_player(name, "Nominations only during evening phase")
             return itemstack
         end
         local day = botc.ST.current_day
@@ -161,7 +159,7 @@ minetest.register_tool("botc:nomination_wand", {
     end,
 })
 
-minetest.register_tool("botc:execution_wand", {
+minetest.register_tool("botc_storyteller:execution_wand", {
     description = "Execution Wand",
     inventory_image = WAND_TEXTURES.execution_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -184,7 +182,7 @@ minetest.register_tool("botc:execution_wand", {
     end,
 })
 
-minetest.register_tool("botc:kill_wand", {
+minetest.register_tool("botc_storyteller:kill_wand", {
     description = "Kill Wand",
     inventory_image = WAND_TEXTURES.kill_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -204,7 +202,7 @@ minetest.register_tool("botc:kill_wand", {
     end,
 })
 
-minetest.register_tool("botc:revive_wand", {
+minetest.register_tool("botc_storyteller:revive_wand", {
     description = "Revive Wand",
     inventory_image = WAND_TEXTURES.revive_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -225,7 +223,7 @@ minetest.register_tool("botc:revive_wand", {
     end,
 })
 
-minetest.register_tool("botc:marker_wand", {
+minetest.register_tool("botc_storyteller:marker_wand", {
     description = "Marker Wand",
     inventory_image = WAND_TEXTURES.marker_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -235,13 +233,13 @@ minetest.register_tool("botc:marker_wand", {
         if target then
             botc.show_marker_formspec(name, target)
         else
-            botc.show_player_list_formspec(name, "botc:marker_select")
+            botc.show_player_list_formspec(name, "botc_storyteller:marker_select")
         end
         return itemstack
     end,
 })
 
-minetest.register_tool("botc:time_wand", {
+minetest.register_tool("botc_storyteller:time_wand", {
     description = "Time Wand",
     inventory_image = WAND_TEXTURES.time_wand,
     on_use = function(itemstack, user, pointed_thing)
@@ -256,6 +254,11 @@ minetest.register_tool("botc:time_wand", {
             botc.ST.clock_state = "idle"
             botc.ST.clock_nominator = nil
             botc.ST.clock_nominee = nil
+            minetest.set_timeofday(0.5)
+        elseif new_phase == "evening" then
+            minetest.set_timeofday(0.75)
+        elseif new_phase == "night" then
+            minetest.set_timeofday(0.2)
         end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ffaa00", "Time is now: " .. new_phase:upper()))
@@ -263,7 +266,7 @@ minetest.register_tool("botc:time_wand", {
     end,
 })
 
-minetest.register_tool("botc:notebook", {
+minetest.register_tool("botc_storyteller:notebook", {
     description = "Player Notebook",
     inventory_image = "default_book.png",
     on_use = function(itemstack, user, pointed_thing)
@@ -272,7 +275,7 @@ minetest.register_tool("botc:notebook", {
         if target then
             botc.show_notebook_formspec(name, target)
         else
-            botc.show_player_list_formspec(name, "botc:notebook")
+            botc.show_player_list_formspec(name, "botc_storyteller:notebook")
         end
         return itemstack
     end,
@@ -302,7 +305,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     end
 
     -- Notebook player list selection (no priv needed)
-    if formname == "botc:notebook_list" then
+    if formname == "botc_storyteller:notebook_list" then
         if fields.select and fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
             if selected and selected.type == "CHG" then
@@ -390,11 +393,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
-    -- Marker player list selection
-    if formname == "botc:marker_select_list" then
-        if fields.select and fields.players then
+    -- Marker player list selection (double-click)
+    if formname == "botc_storyteller:marker_select_list" then
+        if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and selected.type == "CHG" then
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
                 local players = minetest.get_connected_players()
                 local names = {}
                 for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
@@ -402,6 +405,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                 if selected.index and names[selected.index] then
                     botc.show_marker_formspec(name, names[selected.index])
                 end
+            end
+        end
+        return true
+    end
             end
         end
         return true
@@ -426,11 +433,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
-    -- Notebook player list selection
-    if formname == "botc:notebook_list" then
-        if fields.select and fields.players then
+    -- Notebook player list selection (double-click)
+    if formname == "botc_storyteller:notebook_list" then
+        if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and selected.type == "CHG" then
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
                 local players = minetest.get_connected_players()
                 local names = {}
                 for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
@@ -442,4 +449,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         end
         return true
     end
+            end
+        end
+        return true
+    end
 end)
+
+-- Make all wands work with right-click too
+minetest.override_item("botc_storyteller:script_wand", { on_place = minetest.registered_tools["botc_storyteller:script_wand"].on_use })
+minetest.override_item("botc_storyteller:nomination_wand", { on_place = minetest.registered_tools["botc_storyteller:nomination_wand"].on_use })
+minetest.override_item("botc_storyteller:execution_wand", { on_place = minetest.registered_tools["botc_storyteller:execution_wand"].on_use })
+minetest.override_item("botc_storyteller:kill_wand", { on_place = minetest.registered_tools["botc_storyteller:kill_wand"].on_use })
+minetest.override_item("botc_storyteller:revive_wand", { on_place = minetest.registered_tools["botc_storyteller:revive_wand"].on_use })
+minetest.override_item("botc_storyteller:marker_wand", { on_place = minetest.registered_tools["botc_storyteller:marker_wand"].on_use })
+minetest.override_item("botc_storyteller:time_wand", { on_place = minetest.registered_tools["botc_storyteller:time_wand"].on_use })
+minetest.override_item("botc_storyteller:notebook", { on_place = minetest.registered_tools["botc_storyteller:notebook"].on_use })

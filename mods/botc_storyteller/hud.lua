@@ -94,7 +94,7 @@ minetest.register_globalstep(function(dtime)
         local pos = minetest.string_to_pos(phash)
         if pos then
             local node = minetest.get_node(pos)
-            if node.name == "botc:voteblock" then
+            if node.name == "botc_storyteller:voteblock" then
                 local colors = { [0] = "#333333", [1] = "#44ff44", [2] = "#444444", [3] = "#88ff88", [4] = "#222222" }
                 node.param2 = vb.state -- store state in param2 for visual
                 minetest.swap_node(pos, node)

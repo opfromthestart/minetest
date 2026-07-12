@@ -118,7 +118,7 @@ minetest.register_chatcommand("botc_nominate", {
         local ok, err = require_st(name) if not ok then return false, err end
         local nominator, nominee = param:match("^(%S+)%s+(%S+)$")
         if not nominator then return false, "Usage: /botc_nominate <nominator> <nominee>" end
-        if botc.ST.phase ~= "day" then return false, "Nominations only during day phase" end
+        if botc.ST.phase ~= "evening" then return false, "Nominations only during evening phase" end
         local day = botc.ST.current_day
         if not botc.ST.nominations[day] then
             botc.ST.nominations[day] = { nominators = {}, nominees = {} }
@@ -214,6 +214,11 @@ minetest.register_chatcommand("botc_time", {
             botc.ST.current_day = botc.ST.current_day + 1
             botc.ST.nominations[botc.ST.current_day] = { nominators = {}, nominees = {} }
             botc.ST.clock_state = "idle"
+            minetest.set_timeofday(0.5)
+        elseif param == "evening" then
+            minetest.set_timeofday(0.75)
+        elseif param == "night" then
+            minetest.set_timeofday(0.2)
         end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ffaa00", "Time is now: " .. param:upper()))
@@ -227,13 +232,13 @@ minetest.register_chatcommand("botc_wand", {
     func = function(name, param)
         local ok, err = require_st(name) if not ok then return false, err end
         local wands = {
-            script = "botc:script_wand",
-            nomination = "botc:nomination_wand",
-            execution = "botc:execution_wand",
-            kill = "botc:kill_wand",
-            revive = "botc:revive_wand",
-            marker = "botc:marker_wand",
-            time = "botc:time_wand",
+            script = "botc_storyteller:script_wand",
+            nomination = "botc_storyteller:nomination_wand",
+            execution = "botc_storyteller:execution_wand",
+            kill = "botc_storyteller:kill_wand",
+            revive = "botc_storyteller:revive_wand",
+            marker = "botc_storyteller:marker_wand",
+            time = "botc_storyteller:time_wand",
         }
         local item = wands[param]
         if not item then return false, "Unknown wand type. Options: script, nomination, execution, kill, revive, marker, time" end
@@ -251,7 +256,7 @@ minetest.register_chatcommand("botc_notebook", {
     func = function(name, param)
         local player = minetest.get_player_by_name(name)
         if not player then return false, "Player not found" end
-        player:get_inventory():add_item("main", "botc:notebook")
+        player:get_inventory():add_item("main", "botc_storyteller:notebook")
         return true, "Notebook given"
     end,
 })
