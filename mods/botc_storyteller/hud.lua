@@ -91,7 +91,7 @@ minetest.register_globalstep(function(dtime)
 
     -- Update vote block visuals
     for phash, vb in pairs(botc.ST.vote_blocks) do
-        local pos = minetest.string_to_pos(phash:gsub(",", " "))
+        local pos = minetest.string_to_pos(phash)
         if pos then
             local node = minetest.get_node(pos)
             if node.name == "botc:voteblock" then

@@ -41,5 +41,5 @@ function botc.get_team_color(team)
 end
 
 function botc.pos_hash(pos)
-    return string.format("%d,%d,%d", pos.x, pos.y, pos.z)
+    return minetest.pos_to_string(pos)
 end

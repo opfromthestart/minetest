@@ -42,7 +42,7 @@ minetest.register_node("botc:voteblock", {
         for phash, vb in pairs(botc.ST.vote_blocks) do
             if vb.owner == name and phash ~= botc.pos_hash(pos) then
                 -- Unclaim old block
-                local oldpos = minetest.string_to_pos(phash:gsub(",", " "))
+                local oldpos = minetest.string_to_pos(phash)
                 if oldpos then
                     local oldmeta = minetest.get_meta(oldpos)
                     oldmeta:set_string("owner", "")
@@ -201,7 +201,7 @@ minetest.register_entity("botc:clock_hand", {
             -- Lock vote blocks as hand passes their angular position
             for phash, vb in pairs(botc.ST.vote_blocks) do
                 if not vb.locked then
-                    local block_pos = minetest.string_to_pos(phash:gsub(",", " "))
+                    local block_pos = minetest.string_to_pos(phash)
                     if block_pos then
                         local dx = block_pos.x - pos.x
                         local dz = block_pos.z - pos.z
