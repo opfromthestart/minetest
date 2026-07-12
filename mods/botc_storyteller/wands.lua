@@ -280,7 +280,46 @@ minetest.register_tool("botc:notebook", {
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
     local name = player:get_player_name()
-    if not minetest.check_player_privs(name, {storyteller = true}) then return end
+    local is_st = minetest.check_player_privs(name, {storyteller = true})
+
+    -- Notebook formspec (no priv needed)
+    if formname:match("^botc:notebook_") then
+        local target = formname:match("^botc:notebook_(.+)$")
+        if fields.note_save then
+            if not botc.ST.player_notes[name] then botc.ST.player_notes[name] = {} end
+            botc.ST.player_notes[name][target] = fields.note_text or ""
+            botc.save_state()
+            minetest.chat_send_player(name, "Note saved for " .. target)
+        end
+        if fields.note_clear then
+            if botc.ST.player_notes[name] then
+                botc.ST.player_notes[name][target] = nil
+            end
+            botc.save_state()
+            minetest.chat_send_player(name, "Note cleared for " .. target)
+        end
+        return true
+    end
+
+    -- Notebook player list selection (no priv needed)
+    if formname == "botc:notebook_list" then
+        if fields.select and fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and selected.type == "CHG" then
+                local players = minetest.get_connected_players()
+                local names = {}
+                for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
+                table.sort(names)
+                if selected.index and names[selected.index] then
+                    botc.show_notebook_formspec(name, names[selected.index])
+                end
+            end
+        end
+        return true
+    end
+
+    -- Remaining formspecs require storyteller priv
+    if not is_st then return end
 
     -- Script wand assign
     if formname:match("^botc:script_wand_") then
