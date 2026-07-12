@@ -1,4 +1,4 @@
-local modpath = minetest.get_modpath("botc_storyteller")
+local modpath = minetest.get_modpath("botc_storyteller_storyteller")
 
 -- Built-in role → team mapping from allroles.txt
 local DEFAULT_TEAMS = {

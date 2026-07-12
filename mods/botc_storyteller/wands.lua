@@ -286,8 +286,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     local is_st = minetest.check_player_privs(name, {storyteller = true})
 
     -- Notebook formspec (no priv needed)
-    if formname:match("^botc:notebook_") then
-        local target = formname:match("^botc:notebook_(.+)$")
+    if formname:match("^botc_storyteller:notebook_") then
+        local target = formname:match("^botc_storyteller:notebook_(.+)$")
         if fields.note_save then
             if not botc.ST.player_notes[name] then botc.ST.player_notes[name] = {} end
             botc.ST.player_notes[name][target] = fields.note_text or ""
@@ -306,9 +306,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
     -- Notebook player list selection (no priv needed)
     if formname == "botc_storyteller:notebook_list" then
-        if fields.select and fields.players then
+        if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and selected.type == "CHG" then
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
                 local players = minetest.get_connected_players()
                 local names = {}
                 for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
@@ -325,8 +325,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if not is_st then return end
 
     -- Script wand assign
-    if formname:match("^botc:script_wand_") then
-        local target = formname:match("^botc:script_wand_(.+)$")
+    if formname:match("^botc_storyteller:script_wand_") then
+        local target = formname:match("^botc_storyteller:script_wand_(.+)$")
         if fields.assign and fields.roles then
             local selected = minetest.explode_textlist_event(fields.roles)
             if selected and selected.type == "CHG" then
@@ -341,8 +341,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     end
 
     -- Marker formspec
-    if formname:match("^botc:marker_") then
-        local target = formname:match("^botc:marker_(.+)$")
+    if formname:match("^botc_storyteller:marker_") then
+        local target = formname:match("^botc_storyteller:marker_(.+)$")
         if not botc.ST.roles[target] then return true end
         local markers = botc.ST.roles[target].markers or {}
 
@@ -405,50 +405,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                 if selected.index and names[selected.index] then
                     botc.show_marker_formspec(name, names[selected.index])
                 end
-            end
-        end
-        return true
-    end
-            end
-        end
-        return true
-    end
-
-    -- Notebook formspec
-    if formname:match("^botc:notebook_") then
-        local target = formname:match("^botc:notebook_(.+)$")
-        if fields.note_save then
-            if not botc.ST.player_notes[name] then botc.ST.player_notes[name] = {} end
-            botc.ST.player_notes[name][target] = fields.note_text or ""
-            botc.save_state()
-            minetest.chat_send_player(name, "Note saved for " .. target)
-        end
-        if fields.note_clear then
-            if botc.ST.player_notes[name] then
-                botc.ST.player_notes[name][target] = nil
-            end
-            botc.save_state()
-            minetest.chat_send_player(name, "Note cleared for " .. target)
-        end
-        return true
-    end
-
-    -- Notebook player list selection (double-click)
-    if formname == "botc_storyteller:notebook_list" then
-        if fields.players then
-            local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
-                local players = minetest.get_connected_players()
-                local names = {}
-                for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
-                table.sort(names)
-                if selected.index and names[selected.index] then
-                    botc.show_notebook_formspec(name, names[selected.index])
-                end
-            end
-        end
-        return true
-    end
             end
         end
         return true

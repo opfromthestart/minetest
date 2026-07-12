@@ -5,7 +5,7 @@ local function require_st(name)
     return true
 end
 
-minetest.register_chatcommand("botc_loadscript", {
+minetest.register_chatcommand("botc_storyteller_loadscript", {
     params = "<filename.json>",
     description = "Load a role script from the mod folder",
     privs = {},
@@ -17,7 +17,7 @@ minetest.register_chatcommand("botc_loadscript", {
     end,
 })
 
-minetest.register_chatcommand("botc_passout", {
+minetest.register_chatcommand("botc_storyteller_passout", {
     params = "[player1 player2 ...]",
     description = "Randomly assign roles from loaded script to all online or named players",
     privs = {},
@@ -32,7 +32,7 @@ minetest.register_chatcommand("botc_passout", {
     end,
 })
 
-minetest.register_chatcommand("botc_assign", {
+minetest.register_chatcommand("botc_storyteller_assign", {
     params = "<player> <role>",
     description = "Manually assign a role to a player",
     privs = {},
@@ -51,7 +51,7 @@ minetest.register_chatcommand("botc_assign", {
     end,
 })
 
-minetest.register_chatcommand("botc_unassign", {
+minetest.register_chatcommand("botc_storyteller_unassign", {
     params = "<player>",
     description = "Clear a player's role",
     privs = {},
@@ -62,7 +62,7 @@ minetest.register_chatcommand("botc_unassign", {
     end,
 })
 
-minetest.register_chatcommand("botc_unassign_all", {
+minetest.register_chatcommand("botc_storyteller_unassign_all", {
     params = "",
     description = "Clear all role assignments and vote block claims",
     privs = {},
@@ -77,7 +77,7 @@ minetest.register_chatcommand("botc_unassign_all", {
     end,
 })
 
-minetest.register_chatcommand("botc_list", {
+minetest.register_chatcommand("botc_storyteller_list", {
     params = "",
     description = "List all assigned players with role/team/status",
     privs = {},
@@ -94,7 +94,7 @@ minetest.register_chatcommand("botc_list", {
     end,
 })
 
-minetest.register_chatcommand("botc_exezone", {
+minetest.register_chatcommand("botc_storyteller_exezone", {
     params = "set",
     description = "Set the execution zone at your position",
     privs = {},
@@ -110,7 +110,7 @@ minetest.register_chatcommand("botc_exezone", {
     end,
 })
 
-minetest.register_chatcommand("botc_nominate", {
+minetest.register_chatcommand("botc_storyteller_nominate", {
     params = "<nominator> <nominee>",
     description = "Nominate a player for execution",
     privs = {},
@@ -140,7 +140,7 @@ minetest.register_chatcommand("botc_nominate", {
     end,
 })
 
-minetest.register_chatcommand("botc_startvote", {
+minetest.register_chatcommand("botc_storyteller_startvote", {
     params = "",
     description = "Start the clock sweep for the current vote",
     privs = {},
@@ -155,7 +155,7 @@ minetest.register_chatcommand("botc_startvote", {
     end,
 })
 
-minetest.register_chatcommand("botc_resetclock", {
+minetest.register_chatcommand("botc_storyteller_resetclock", {
     params = "",
     description = "Reset the clock to idle",
     privs = {},
@@ -176,7 +176,7 @@ minetest.register_chatcommand("botc_resetclock", {
     end,
 })
 
-minetest.register_chatcommand("botc_deadvote", {
+minetest.register_chatcommand("botc_storyteller_deadvote", {
     params = "<player>",
     description = "Use a dead player's ghost vote",
     privs = {},
@@ -200,7 +200,7 @@ minetest.register_chatcommand("botc_deadvote", {
     end,
 })
 
-minetest.register_chatcommand("botc_time", {
+minetest.register_chatcommand("botc_storyteller_time", {
     params = "<day|evening|night>",
     description = "Set time of day",
     privs = {},
@@ -225,20 +225,20 @@ minetest.register_chatcommand("botc_time", {
     end,
 })
 
-minetest.register_chatcommand("botc_wand", {
+minetest.register_chatcommand("botc_storyteller_wand", {
     params = "<script|nomination|execution|kill|revive|marker|time>",
     description = "Give yourself a storyteller wand",
     privs = {},
     func = function(name, param)
         local ok, err = require_st(name) if not ok then return false, err end
         local wands = {
-            script = "botc_storyteller:script_wand",
-            nomination = "botc_storyteller:nomination_wand",
-            execution = "botc_storyteller:execution_wand",
-            kill = "botc_storyteller:kill_wand",
-            revive = "botc_storyteller:revive_wand",
-            marker = "botc_storyteller:marker_wand",
-            time = "botc_storyteller:time_wand",
+            script = "botc_storyteller_storyteller:script_wand",
+            nomination = "botc_storyteller_storyteller:nomination_wand",
+            execution = "botc_storyteller_storyteller:execution_wand",
+            kill = "botc_storyteller_storyteller:kill_wand",
+            revive = "botc_storyteller_storyteller:revive_wand",
+            marker = "botc_storyteller_storyteller:marker_wand",
+            time = "botc_storyteller_storyteller:time_wand",
         }
         local item = wands[param]
         if not item then return false, "Unknown wand type. Options: script, nomination, execution, kill, revive, marker, time" end
@@ -249,14 +249,14 @@ minetest.register_chatcommand("botc_wand", {
     end,
 })
 
-minetest.register_chatcommand("botc_notebook", {
+minetest.register_chatcommand("botc_storyteller_notebook", {
     params = "",
     description = "Get a player notebook",
     privs = {},
     func = function(name, param)
         local player = minetest.get_player_by_name(name)
         if not player then return false, "Player not found" end
-        player:get_inventory():add_item("main", "botc_storyteller:notebook")
+        player:get_inventory():add_item("main", "botc_storyteller_storyteller:notebook")
         return true, "Notebook given"
     end,
 })

@@ -1,9 +1,9 @@
 local VOTE_BLOCK_STATES = {
-    [0] = { desc = "Normal No",  tile = "botc_vote_no.png" },
-    [1] = { desc = "Normal Yes", tile = "botc_vote_yes.png" },
-    [2] = { desc = "Ghost No",   tile = "botc_vote_ghost_no.png" },
-    [3] = { desc = "Ghost Yes",  tile = "botc_vote_ghost_yes.png" },
-    [4] = { desc = "Used Ghost", tile = "botc_vote_used.png" },
+    [0] = { desc = "Normal No",  tile = "botc_storyteller_vote_no.png" },
+    [1] = { desc = "Normal Yes", tile = "botc_storyteller_vote_yes.png" },
+    [2] = { desc = "Ghost No",   tile = "botc_storyteller_vote_ghost_no.png" },
+    [3] = { desc = "Ghost Yes",  tile = "botc_storyteller_vote_ghost_yes.png" },
+    [4] = { desc = "Used Ghost", tile = "botc_storyteller_vote_used.png" },
 }
 
 -- Fallback: use colorized default textures since we don't have custom images
@@ -15,7 +15,7 @@ local function vote_block_tile(state)
     return "default_wood.png^[colorize:" .. (colors[state] or "#333333") .. ":128"
 end
 
-minetest.register_node("botc_storyteller:voteblock", {
+minetest.register_node("botc_storyteller_storyteller:voteblock", {
     description = "Vote Block",
     tiles = {
         "default_wood.png^[colorize:#333333:128",
@@ -107,7 +107,7 @@ minetest.register_node("botc_storyteller:voteblock", {
     end,
 })
 
-minetest.register_node("botc_storyteller:clock", {
+minetest.register_node("botc_storyteller_storyteller:clock", {
     description = "BotC Clock",
     tiles = { "default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
               "default_steel_block.png", "default_steel_block.png", "default_steel_block.png" },
@@ -123,7 +123,7 @@ minetest.register_node("botc_storyteller:clock", {
     end,
 })
 
-minetest.register_entity("botc_storyteller:clock_hand", {
+minetest.register_entity("botc_storyteller_storyteller:clock_hand", {
     initial_properties = {
         visual = "cube",
         visual_size = { x = 2, y = 0.1, z = 0.1 },
@@ -236,13 +236,13 @@ function botc.manage_clock_hand()
     local entities = minetest.get_objects_inside_radius(pos, 2)
     local hand_exists = false
     for _, obj in ipairs(entities) do
-        if obj and obj:get_luaentity() and obj:get_luaentity().name == "botc_storyteller:clock_hand" then
+        if obj and obj:get_luaentity() and obj:get_luaentity().name == "botc_storyteller_storyteller:clock_hand" then
             hand_exists = true
             break
         end
     end
 
     if not hand_exists and (botc.ST.clock_state == "nominating" or botc.ST.clock_state == "sweeping") then
-        minetest.add_entity({ x = pos.x, y = pos.y + 0.6, z = pos.z }, "botc_storyteller:clock_hand")
+        minetest.add_entity({ x = pos.x, y = pos.y + 0.6, z = pos.z }, "botc_storyteller_storyteller:clock_hand")
     end
 end
