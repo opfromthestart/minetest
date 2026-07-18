@@ -159,13 +159,49 @@ end
 -- sfinv creative block picker page
 local NODES_PER_PAGE = 24
 
-local function is_hidden_variant(name)
+local SHAPE_PREFIXES = {
+    "stair_", "slab_", "slope_", "micro_", "panel_",
+    "inner_stair_", "outer_stair_",
+}
+-- Must be sorted longest-first so we strip the most specific suffix
+table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
+
+local SHAPE_SUFFIXES = {
+    "_two_sides", "_alt_2", "_alt_1", "_alt",
+    "_outer", "_inner", "_half",
+    "_15", "_14", "_12", "_10", "_8", "_6", "_4", "_2", "_1",
+}
+
+local function is_shape_variant(name)
     local base = name:gsub("^[^:]*:", "")
-    return base:find("^stair_") or base:find("^slab_")
+    for _, prefix in ipairs(SHAPE_PREFIXES) do
+        if base:find("^" .. prefix) then
+            return true
+        end
+    end
+    return false
 end
 
-local function strip_variant(name)
-    return name:gsub(":stair_", ":"):gsub(":slab_", ":")
+local function extract_material(name)
+    local base = name:gsub("^[^:]*:", "")
+    local had_shape = false
+    for _, prefix in ipairs(SHAPE_PREFIXES) do
+        local stripped = base:gsub("^" .. prefix, "")
+        if stripped ~= base then
+            base = stripped
+            had_shape = true
+            break
+        end
+    end
+    if had_shape then
+        for _, suffix in ipairs(SHAPE_SUFFIXES) do
+            if base:find(suffix .. "$") then
+                base = base:gsub(suffix .. "$", "")
+                break
+            end
+        end
+    end
+    return base
 end
 
 local function get_node_list(base_name)
@@ -174,12 +210,11 @@ local function get_node_list(base_name)
         if not def.groups.not_in_creative_inventory or def.groups.not_in_creative_inventory == 0 then
             local desc = def.description or name
             if base_name then
-                local stripped = strip_variant(name)
-                if stripped == base_name then
+                if extract_material(name) == base_name then
                     table.insert(nodes, {name = name, desc = desc})
                 end
             else
-                if not is_hidden_variant(name) then
+                if not is_shape_variant(name) then
                     table.insert(nodes, {name = name, desc = desc})
                 end
             end
@@ -219,13 +254,14 @@ local function build_deco_formspec(player, context)
     local y_offset = 0.8
 
     if variant then
-        local var_desc = variant:gsub("^[^:]*:", ""):gsub("_", " "):gsub("(%a)([%w]*)", function(a, b) return a:upper() .. b end)
-        fs = fs .. "label[0,0.0;" .. minetest.formspec_escape("Showing all variants of: " .. var_desc) .. "]"
+        local var_desc = variant:gsub("_", " "):gsub("(%a)([%w]*)", function(a, b) return a:upper() .. b end)
+        fs = fs .. "label[1.5,0.1;" .. minetest.formspec_escape("Variants: " .. var_desc) .. "]"
         fs = fs .. "button[0,0;1.5,0.7;hdd_variant_back;< Back]"
         y_offset = 0.8
     else
         fs = fs .. "field[0,0.1;6,0.7;hdd_search;;" .. minetest.formspec_escape(search) .. "]"
         fs = fs .. "button[5.5,0.1;1,0.7;hdd_search_btn;Search]"
+        fs = fs .. "field_close_on_enter[hdd_search;false]"
         if search ~= "" then
             fs = fs .. "button[6.5,0.1;1,0.7;hdd_search_clr;Clear]"
             fs = fs .. "label[0,0.8;" .. minetest.formspec_escape(#nodes .. " matches") .. "]"
@@ -315,7 +351,7 @@ sfinv.register_page("home_deco:deco", {
                     sfinv.set_player_inventory_formspec(player, context)
                 else
                     -- In main view: open variant view for this item
-                    home_deco._deco_variant[name] = strip_variant(clean_name)
+                    home_deco._deco_variant[name] = extract_material(clean_name)
                     home_deco._deco_page[name] = 0
                     home_deco._deco_search[name] = ""
                     sfinv.set_player_inventory_formspec(player, context)
