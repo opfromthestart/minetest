@@ -219,13 +219,10 @@ local function get_node_list(base_name)
     for name, def in pairs(minetest.registered_nodes) do
         local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
         if base_name then
-            -- Variant view: show all matching nodes, including those
-            -- hidden from regular creative (many shape mods set
-            -- not_in_creative_inventory=1 on their variants).
-            -- Use bidirectional prefix matching so that, e.g.,
-            -- clicking fern_wood shows slab_fern_wood AND fern_wood_fence.
+            -- Use prefix matching with a word boundary (_ or EOS) so that
+            -- e.g. "wood" matches "wood_tile" but NOT "wooden" or "woodframed".
             local mat = extract_material(name)
-            if mat:find("^" .. base_name) or base_name:find("^" .. mat) then
+            if mat == base_name or mat:find("^" .. base_name .. "_") then
                 table.insert(nodes, {name = name, desc = def.description or name})
             end
         else
