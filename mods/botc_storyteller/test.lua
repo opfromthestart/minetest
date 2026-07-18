@@ -1297,6 +1297,24 @@ bob_props = mock_players["Bob"].props or {}
 bob_textures = bob_props.textures or {}
 assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), "rejoin alive stays normal")
 
+-- Regression: killing a player in a pyre execution zone must NOT hide
+-- them (visual_size = 0). pyre_hide_player used to be called on every
+-- death in a pyre zone, permanently hiding the body until revived -
+-- directly conflicting with the "always visible, just transparent"
+-- dead-player design. Kill/execution now only apply the transparency.
+botc.ST.execution_zone = {x = 5, y = 5, z = 5}
+minetest.registered_nodes["botc_storyteller:fire_pyre"] = {name = "botc_storyteller:fire_pyre"}
+mock_nodes["5,5,5"] = {name = "botc_storyteller:fire_pyre", param2 = 0}
+assert_true(botc.is_execution_zone_pyre(), "execution zone is a fire pyre for this test")
+botc.ST.roles["Bob"].alive = true
+mock_players["Bob"].props = nil
+kill_wand33.on_use("botc_storyteller:kill_wand", user_obj33, {type = "object", ref = bob_obj33})
+assert_false(botc.ST.roles["Bob"].alive, "Bob is dead after kill wand in pyre zone")
+bob_props = mock_players["Bob"].props or {}
+bob_vs = bob_props.visual_size
+assert_true(not bob_vs or bob_vs.x ~= 0, "killing in a pyre zone does not hide (visual_size 0) the player")
+botc.ST.execution_zone = nil
+
 _G.player_api = nil
 _G.skins = nil
 

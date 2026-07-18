@@ -4,29 +4,37 @@ local ghost_timer = 0
 -- sets a player's skin textures, we re-apply the dead-transparency modifier
 -- if the player is currently dead. This is necessary because skinsdb can
 -- overwrite textures independently of our own globalstep.
-if minetest.global_exists("player_api") and player_api.set_textures then
-    local _orig_set_textures = player_api.set_textures
+--
+-- Deferred to register_on_mods_loaded (rather than running at file-load
+-- time) because botc_storyteller has no guaranteed load-order relationship
+-- with player_api/skinsdb - if those mods haven't loaded yet when this
+-- file runs, `player_api` wouldn't exist as a global yet and the wrap
+-- would silently never install, leaving dead players fully opaque.
+minetest.register_on_mods_loaded(function()
+    if minetest.global_exists("player_api") and player_api.set_textures then
+        local _orig_set_textures = player_api.set_textures
 
-    player_api.set_textures = function(player, textures)
-        local name = player:get_player_name()
-        local data = botc.ST.roles[name]
-        local modded = {}
-        for i = 1, #textures do
-            -- Strip any previously-applied opacity modifier first so we
-            -- don't stack it or leave it behind when reviving.
-            local base = textures[i]
-            if base ~= "" then
-                base = base:gsub("%^%[opacity:%d+", "")
+        player_api.set_textures = function(player, textures)
+            local name = player:get_player_name()
+            local data = botc.ST.roles[name]
+            local modded = {}
+            for i = 1, #textures do
+                -- Strip any previously-applied opacity modifier first so we
+                -- don't stack it or leave it behind when reviving.
+                local base = textures[i]
+                if base ~= "" then
+                    base = base:gsub("%^%[opacity:%d+", "")
+                end
+                if data and not data.alive and base ~= "" then
+                    modded[i] = base .. botc.DEAD_TEXTURE_MOD
+                else
+                    modded[i] = base
+                end
             end
-            if data and not data.alive and base ~= "" then
-                modded[i] = base .. botc.DEAD_TEXTURE_MOD
-            else
-                modded[i] = base
-            end
+            _orig_set_textures(player, modded)
         end
-        _orig_set_textures(player, modded)
     end
-end
+end)
 
 minetest.register_globalstep(function(dtime)
     ghost_timer = ghost_timer + dtime

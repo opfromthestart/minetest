@@ -359,9 +359,6 @@ minetest.register_tool("botc_storyteller:execution_wand", {
                     data.alive = false
                     botc.sync_vote_block_for_player(target)
                     botc.update_alive_texture(target)
-                    if botc.is_execution_zone_pyre() then
-                        botc.pyre_hide_player(target)
-                    end
                     botc.save_state()
                     minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
                 end
@@ -399,9 +396,6 @@ minetest.register_tool("botc_storyteller:kill_wand", {
         data.alive = false
         botc.sync_vote_block_for_player(target)
         botc.update_alive_texture(target)
-        if botc.is_execution_zone_pyre() then
-            botc.pyre_hide_player(target)
-        end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
         return itemstack
@@ -645,9 +639,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                         data.alive = false
                                         botc.sync_vote_block_for_player(target)
                                         botc.update_alive_texture(target)
-                                        if botc.is_execution_zone_pyre() then
-                                            botc.pyre_hide_player(target)
-                                        end
                                         botc.save_state()
                                         minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
                                     end
@@ -686,9 +677,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                         data.alive = false
                         botc.sync_vote_block_for_player(target)
                         botc.update_alive_texture(target)
-                        if botc.is_execution_zone_pyre() then
-                            botc.pyre_hide_player(target)
-                        end
                         botc.save_state()
                         minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been killed!"))
                     end
