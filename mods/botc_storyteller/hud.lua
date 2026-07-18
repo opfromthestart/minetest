@@ -198,7 +198,7 @@ local function update_timer_hud(name, player)
             text = text,
             position = {x = 0.85, y = 0.92},
             alignment = {x = 0, y = 0},
-            scale = {x = 1, y = 1},
+            size = {x = 4, y = 1},
             number = 0xFFAA00,
         })
         timer_hud_ids[name] = id
