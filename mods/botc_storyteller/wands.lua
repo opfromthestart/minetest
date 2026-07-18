@@ -52,7 +52,7 @@ function botc.show_player_list_formspec(viewer, formname_prefix)
         minetest.chat_send_player(viewer, "No players online")
         return
     end
-    local fs = "size[6,8]label[0.5,0.3;Select a player (double-click):]textlist[0.5,1;5,7;players;" .. table.concat(items, ",") .. "]"
+    local fs = "size[6,8]label[0.5,0.3;Select a player (double-click):]textlist[0.5,1;5,7;players;" .. table.concat(items, ",") .. ";0]"
     minetest.show_formspec(viewer, formname_prefix .. "_list", fs)
 end
 
@@ -534,7 +534,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:notebook_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -552,7 +552,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:wand_script_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -567,7 +567,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:wand_nomination_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -615,7 +615,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:wand_execution_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -668,7 +668,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:wand_kill_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -696,7 +696,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:wand_revive_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
@@ -805,7 +805,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname == "botc_storyteller:marker_select_list" then
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
-            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+            if selected and (selected.type == "DCL") then
                                 local names = botc.all_players()
                                 table.sort(names)
                 if selected.index and names[selected.index] then
