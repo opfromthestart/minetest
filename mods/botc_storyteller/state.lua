@@ -113,11 +113,16 @@ function botc.update_alive_texture(name)
         return
     end
     local p = botc.get_player(name)
-    if p then
-        if data.alive then
-            p:set_properties({visual_size = {x = 1, y = 1}})
-        else
-            p:set_properties({visual_size = {x = 0.8, y = 0.8}})
+    if p and p.get_properties then
+        local props = p:get_properties()
+        local textures = props and props.textures or {}
+        if #textures > 0 then
+            if data.alive then
+                textures[1] = textures[1]:gsub("%^%[opacity:[0-9]+", "")
+            elseif not textures[1]:find("opacity", 1, true) then
+                textures[1] = textures[1] .. botc.DEAD_TEXTURE_MOD
+            end
+            p:set_properties({textures = textures})
         end
     end
 end
