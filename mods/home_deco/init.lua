@@ -12,6 +12,7 @@ home_deco._deco_search = {}
 home_deco._deco_variant = {}  -- base item name when viewing variants, nil otherwise
 home_deco._last_context = {}  -- last known zone context per player, persisted
 home_deco._item_map = {}      -- {[playername] = {[btn_idx] = item_name}} for button decode
+home_deco._banned = {}        -- set of blacklisted item names
 
 local function load_state()
     local owners = storage:get_string("home_owners")
@@ -29,12 +30,22 @@ local function load_state()
         local parsed = minetest.parse_json(ctxs)
         if parsed then home_deco._last_context = parsed end
     end
+    local banned = storage:get_string("banned")
+    if banned ~= "" then
+        local parsed = minetest.parse_json(banned)
+        if parsed then
+            for _, item in ipairs(parsed) do home_deco._banned[item] = true end
+        end
+    end
 end
 
 local function save_state()
     storage:set_string("home_owners", minetest.write_json(home_deco.home_owners))
     storage:set_string("home_inventories", minetest.write_json(home_deco.home_inventories))
     storage:set_string("last_contexts", minetest.write_json(home_deco._last_context))
+    local banned_list = {}
+    for item in pairs(home_deco._banned) do table.insert(banned_list, item) end
+    storage:set_string("banned", minetest.write_json(banned_list))
 end
 
 local function serialize_list(list)
@@ -172,7 +183,7 @@ local NODES_PER_PAGE = 24
 local SHAPE_PREFIXES = {
     "stair_", "slab_", "slope_", "micro_", "panel_",
     "inner_stair_", "outer_stair_",
-    "fence_rail_", "fence_gate_", "fence_",
+    "fence_rail_", "fence_gate_", "fence_", "gate_",
 }
 -- Must be sorted longest-first so we strip the most specific suffix
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
@@ -180,6 +191,7 @@ table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
 local SHAPE_SUFFIXES = {
     -- Furniture / crafted items
     "_fence_gate_closed", "_fence_rail", "_fence_gate", "_fence",
+    "_gate_closed", "_closed",
     "_mese_light",
     -- Shape/numeric
     "_two_sides", "_alt_2", "_alt_1", "_alt",
@@ -235,8 +247,9 @@ end
 local function get_node_list(base_name)
     local nodes = {}
     for name, def in pairs(minetest.registered_nodes) do
-        local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
-        if base_name then
+        if not home_deco._banned[name] then
+            local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
+            if base_name then
             -- Exact material match only: clicking "wood" shows stair_wood,
             -- slab_wood, etc. but NOT wood_tile or wood_tile_center (those
             -- are separate style families - click them directly).
@@ -250,6 +263,7 @@ local function get_node_list(base_name)
                     table.insert(nodes, {name = name, desc = def.description or name})
                 end
             end
+        end
         end
     end
     table.sort(nodes, function(a, b) return a.desc:lower() < b.desc:lower() end)
@@ -303,6 +317,50 @@ minetest.register_chatcommand("home_deco_verify", {
             table.insert(report, "OK: every node in exactly one place")
         end
         return true, table.concat(report, "\n")
+    end,
+})
+
+minetest.register_chatcommand("home_deco_ban", {
+    params = "<item_name>",
+    description = "Ban an item from the home_deco creative list",
+    privs = {server = true},
+    func = function(name, param)
+        param = param:trim()
+        if param == "" then return false, "Usage: /home_deco_ban <item_name>" end
+        if not minetest.registered_nodes[param] then
+            return false, param .. " is not a registered node"
+        end
+        home_deco._banned[param] = true
+        save_state()
+        return true, "Banned: " .. param
+    end,
+})
+
+minetest.register_chatcommand("home_deco_unban", {
+    params = "<item_name>",
+    description = "Remove an item from the ban list",
+    privs = {server = true},
+    func = function(name, param)
+        param = param:trim()
+        if param == "" then return false, "Usage: /home_deco_unban <item_name>" end
+        home_deco._banned[param] = nil
+        save_state()
+        return true, "Unbanned: " .. param
+    end,
+})
+
+minetest.register_chatcommand("home_deco_banlist", {
+    params = "",
+    description = "List all banned items",
+    privs = {server = true},
+    func = function(name, param)
+        local items = {}
+        for item in pairs(home_deco._banned) do
+            table.insert(items, item)
+        end
+        table.sort(items)
+        if #items == 0 then return true, "No items banned" end
+        return true, table.concat(items, "\n")
     end,
 })
 
