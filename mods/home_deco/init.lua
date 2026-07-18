@@ -219,10 +219,11 @@ local function get_node_list(base_name)
     for name, def in pairs(minetest.registered_nodes) do
         local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
         if base_name then
-            -- Use prefix matching with a word boundary (_ or EOS) so that
-            -- e.g. "wood" matches "wood_tile" but NOT "wooden" or "woodframed".
+            -- Exact material match only: clicking "wood" shows stair_wood,
+            -- slab_wood, etc. but NOT wood_tile or wood_tile_center (those
+            -- are separate style families - click them directly).
             local mat = extract_material(name)
-            if mat == base_name or mat:find("^" .. base_name .. "_") then
+            if mat == base_name then
                 table.insert(nodes, {name = name, desc = def.description or name})
             end
         else
