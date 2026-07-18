@@ -177,15 +177,24 @@ local SHAPE_PREFIXES = {
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
 
 local SHAPE_SUFFIXES = {
+    -- Furniture / crafted items (strip to find base material)
+    "_fence_gate_closed", "_fence_rail", "_fence_gate", "_fence",
+    "_gate_closed", "_gate",
+    "_trapdoor_open", "_trapdoor", "_door_b", "_door_a", "_door",
+    "_chest_locked", "_chest",
+    "_rail", "_mese_light", "_meselight", "_light",
     -- Shape/numeric
     "_two_sides", "_alt_2", "_alt_1", "_alt",
     "_outer", "_inner", "_half",
     "_15", "_14", "_12", "_10", "_8", "_6", "_4", "_2", "_1",
-    -- Colors (common in cblocks, unifiedbricks, etc.)
-    "_black", "_blue", "_brown", "_cyan", "_dark_green", "_dark_grey",
-    "_green", "_grey", "_gray", "_magenta", "_orange", "_pink",
-    "_red", "_violet", "_purple", "_white", "_yellow",
+    -- Colors
+    "_dark_green", "_dark_grey",
+    "_black", "_blue", "_brown", "_cyan", "_green", "_grey", "_gray",
+    "_magenta", "_orange", "_pink", "_red", "_violet", "_purple",
+    "_white", "_yellow",
 }
+-- Must be sorted longest-first
+table.sort(SHAPE_SUFFIXES, function(a, b) return #a > #b end)
 
 local function is_shape_variant(name)
     local base = name:gsub("^[^:]*:", "")
@@ -206,10 +215,15 @@ local function extract_material(name)
             break
         end
     end
-    for _, suffix in ipairs(SHAPE_SUFFIXES) do
-        if base:find(suffix .. "$") then
-            base = base:gsub(suffix .. "$", "")
-            break
+    local changed = true
+    while changed do
+        changed = false
+        for _, suffix in ipairs(SHAPE_SUFFIXES) do
+            if base:find(suffix .. "$") then
+                base = base:gsub(suffix .. "$", "")
+                changed = true
+                break
+            end
         end
     end
     return base
