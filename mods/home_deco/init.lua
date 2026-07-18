@@ -177,12 +177,9 @@ local SHAPE_PREFIXES = {
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
 
 local SHAPE_SUFFIXES = {
-    -- Furniture / crafted items (strip to find base material)
+    -- Furniture / crafted items
     "_fence_gate_closed", "_fence_rail", "_fence_gate", "_fence",
-    "_gate_closed", "_gate",
-    "_trapdoor_open", "_trapdoor", "_door_b", "_door_a", "_door",
-    "_chest_locked", "_chest",
-    "_rail", "_mese_light", "_meselight", "_light",
+    "_mese_light",
     -- Shape/numeric
     "_two_sides", "_alt_2", "_alt_1", "_alt",
     "_outer", "_inner", "_half",
