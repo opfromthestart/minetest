@@ -956,7 +956,26 @@ end)
 -- Make all wands work with right-click too
 minetest.override_item("botc_storyteller:script_wand", { on_place = minetest.registered_tools["botc_storyteller:script_wand"].on_use })
 minetest.override_item("botc_storyteller:nomination_wand", { on_place = minetest.registered_tools["botc_storyteller:nomination_wand"].on_use })
-minetest.override_item("botc_storyteller:execution_wand", { on_place = minetest.registered_tools["botc_storyteller:execution_wand"].on_use })
+minetest.override_item("botc_storyteller:execution_wand", {
+    on_place = function(itemstack, user, pointed_thing)
+        local name = user:get_player_name()
+        if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
+        local target = get_target(user, pointed_thing)
+        if not target then return itemstack end
+        local data = botc.ST.roles[target]
+        if not data then return itemstack end
+        botc.ST.execution_target = target
+        botc.save_state()
+        minetest.chat_send_all(minetest.colorize("#ff2222", target .. " has been marked for execution!"))
+        return itemstack
+    end,
+    on_secondary_use = function(itemstack, user, pointed_thing)
+        local name = user:get_player_name()
+        if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
+        botc.show_player_list_formspec(name, "botc_storyteller:wand_execution")
+        return itemstack
+    end,
+})
 minetest.override_item("botc_storyteller:kill_wand", { on_place = minetest.registered_tools["botc_storyteller:kill_wand"].on_use })
 minetest.override_item("botc_storyteller:revive_wand", { on_place = minetest.registered_tools["botc_storyteller:revive_wand"].on_use })
 minetest.override_item("botc_storyteller:marker_wand", { on_place = minetest.registered_tools["botc_storyteller:marker_wand"].on_use })

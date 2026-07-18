@@ -671,9 +671,12 @@ minetest.register_entity("botc_storyteller:fire_pyre_effect", {
         local extra = (math.random() < (intensity * 60 - base)) and 1 or 0
         local anum = base + extra
         for _ = 1, anum do
-            local ox = (math.random() - 0.5) * 2.4
-            local oy = math.random() * 3.5
-            local oz = (math.random() - 0.5) * 2.4
+            -- Circle of fire at the base (not a full cylinder)
+            local angle = math.random() * 2 * math.pi
+            local radius = math.random() * 1.2
+            local ox = math.cos(angle) * radius
+            local oy = math.random() * 0.3
+            local oz = math.sin(angle) * radius
             minetest.add_particle({
                 pos = {x = pos.x + ox, y = pos.y + oy, z = pos.z + oz},
                 velocity = {x = (math.random()-0.5)*2, y = math.random()*4+1, z = (math.random()-0.5)*2},

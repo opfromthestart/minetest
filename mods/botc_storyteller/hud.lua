@@ -132,7 +132,7 @@ local function update_indicators()
             if tp then
                 local pos = tp:get_pos()
                 if pos then
-                    botc.ST._nominated_indicators[name]:set_pos({ x = pos.x, y = pos.y + 1.9, z = pos.z })
+                    botc.ST._nominated_indicators[name]:set_pos({ x = pos.x, y = pos.y + 2.25, z = pos.z })
                 end
             end
         end
