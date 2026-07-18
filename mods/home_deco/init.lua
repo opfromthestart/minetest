@@ -219,7 +219,10 @@ local function get_node_list(base_name)
             -- Variant view: show all matching nodes, including those
             -- hidden from regular creative (many shape mods set
             -- not_in_creative_inventory=1 on their variants).
-            if extract_material(name):find("^" .. base_name) then
+            -- Use bidirectional prefix matching so that, e.g.,
+            -- clicking fern_wood shows slab_fern_wood AND fern_wood_fence.
+            local mat = extract_material(name)
+            if mat:find("^" .. base_name) or base_name:find("^" .. mat) then
                 table.insert(nodes, {name = name, desc = def.description or name})
             end
         else
@@ -358,6 +361,7 @@ sfinv.register_page("home_deco:deco", {
                 if variant then
                     -- In variant view: add the item to inventory
                     player:get_inventory():add_item("main", clean_name .. " 99")
+                    minetest.log("action", name .. " takes " .. clean_name .. " from home_deco creative inventory")
                     sfinv.set_player_inventory_formspec(player, context)
                 else
                     -- In main view: open variant view for this item
@@ -509,6 +513,40 @@ minetest.register_on_leaveplayer(function(player)
         home_deco._deco_variant[name] = nil
         save_state()
     end
+end)
+
+minetest.register_on_shutdown(function()
+    for name in pairs(home_deco.player_home_state) do
+        if home_deco.player_home_state[name] then
+            local player = minetest.get_player_by_name(name)
+            if player then
+                local inv = player:get_inventory()
+                local main_list = inv:get_list("main")
+                local craft_list = inv:get_list("craft")
+                local clean_main = {}
+                for _, stack in ipairs(main_list) do
+                    if not stack:is_empty() then
+                        local meta = stack:get_meta()
+                        if meta:get_string("home_deco_tool") ~= "1" then
+                            table.insert(clean_main, stack:to_string())
+                        end
+                    end
+                end
+                home_deco.home_inventories[name] = {
+                    main = clean_main,
+                    craft = serialize_list(craft_list),
+                }
+                local saved = home_deco.saved_player_inventory[name]
+                if saved then
+                    inv:set_list("main", deserialize_list(saved.main))
+                    inv:set_list("craft", deserialize_list(saved.craft))
+                end
+            end
+            home_deco.player_home_state[name] = false
+            home_deco.saved_player_inventory[name] = nil
+        end
+    end
+    save_state()
 end)
 
 minetest.register_on_joinplayer(function(player)
