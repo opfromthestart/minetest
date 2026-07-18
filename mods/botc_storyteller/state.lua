@@ -95,7 +95,7 @@ end
 -- Dead players are rendered partially transparent (~40% opacity) so
 -- they're visually distinct. Applied via a texture modifier that
 -- layers on top of whatever skin/texture is already in use.
-botc.DEAD_TEXTURE_MOD = "^[opacity:178" -- ~0.7 alpha, ghostly but visible
+botc.DEAD_TEXTURE_MOD = "^[opacity:102" -- ~0.4 alpha, ghostly but visible
 botc.ALIVE_TEXTURE_MOD = ""
 
 function botc.update_alive_texture(name)
@@ -139,7 +139,7 @@ function botc.get_player(name)
     return nil
 end
 
-local TEAM_COLORS = { townsfolk = "#4488ff", outsider = "#44aaff", minion = "#ff4444", demon = "#ff2222", storyteller = "#ffaa00" }
+local TEAM_COLORS = { townsfolk = "#4488ff", outsider = "#aa44ff", minion = "#ff7700", demon = "#ff2222", storyteller = "#ffaa00" }
 
 function botc.save_state()
     if botc.ST.clock_pos then

@@ -741,7 +741,16 @@ assert_true(botc.ST.nominations[3] ~= nil, "nominations persisted")
 assert_true(botc.ST.nominations[3].nominees.Bob, "nominees persisted")
 assert_eq(botc.ST.player_notes["Alice"].Bob, "suspicious", "notes persisted")
 
-section("20. Fake Player Possession / resolve_actor")
+section("20. Team Colors")
+reset_state()
+assert_eq(botc.get_team_color("townsfolk"), "#4488ff", "townsfolk blue")
+assert_eq(botc.get_team_color("outsider"), "#aa44ff", "outsider purple")
+assert_eq(botc.get_team_color("minion"), "#ff7700", "minion orange")
+assert_eq(botc.get_team_color("demon"), "#ff2222", "demon red")
+assert_eq(botc.get_team_color("storyteller"), "#ffaa00", "storyteller gold")
+assert_eq(botc.get_team_color("unknown"), "#ffffff", "unknown defaults to white")
+
+section("21. Fake Player Possession / resolve_actor")
 reset_state()
 assert_eq(botc.resolve_actor("Alice"), "Alice", "resolve_actor passthrough when not possessing")
 botc.ST._possession["Alice"] = "Bob"
@@ -758,7 +767,7 @@ assert_true(type(fp:get_pos()) == "table" or fp:get_pos() == nil, "get_pos retur
 botc.fake_players["P1"] = nil
 
 -- ============================================================
-section("21. Role Distribution Table")
+section("22. Role Distribution Table")
 -- ============================================================
 -- Tests passout.lua produces exact per-player-count team distribution
 -- from botc_guide section 4.2.
@@ -794,13 +803,13 @@ for count = 5, 15 do
 end
 
 -- ============================================================
-section("22. Default Phase After State Init")
+section("23. Default Phase After State Init")
 -- ============================================================
 reset_state()
 assert_eq(botc.ST.phase, "night", "fresh state defaults to night phase (botc_guide 2.3)")
 
 -- ============================================================
-section("23. Vote Tally and Execution Threshold")
+section("24. Vote Tally and Execution Threshold")
 -- ============================================================
 -- Tests the actual production functions botc.tally_votes and
 -- botc.would_execute (used by voting.lua clock_hand on_step), per
@@ -901,7 +910,7 @@ do
 end
 
 -- ============================================================
-section("24. Nomination Rules via Real Commands")
+section("25. Nomination Rules via Real Commands")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -931,7 +940,7 @@ local ok_renominate = nom_cmd.func("StorytellerX", "George Frank")
 assert_false(ok_renominate, "Frank already nominated this day, blocked")
 
 -- ============================================================
-section("25. Dead Vote Used Once via Real Command (botc_guide 6.2)")
+section("26. Dead Vote Used Once via Real Command (botc_guide 6.2)")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -951,7 +960,7 @@ local ok_alive_dvote = dvote_cmd.func("StorytellerX", "Alive1")
 assert_false(ok_alive_dvote, "alive player cannot use the dead-vote mechanic (guide 6.2)")
 
 -- ============================================================
-section("26. Kill Wand Self-Skip")
+section("27. Kill Wand Self-Skip")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1009,7 +1018,7 @@ fields_handler(st_obj3, "botc_storyteller:wand_kill_list", {players = "DCL:2"})
 assert_false(botc.ST.roles["StorytellerX"].alive, "kill formspec self-select works from list")
 
 -- ============================================================
-section("27. Script Wand Textlist Selection + Assign")
+section("28. Script Wand Textlist Selection + Assign")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1040,7 +1049,7 @@ fields_handler(st_obj, "botc_storyteller:script_wand_Bob", {assign = "true"})
 assert_eq(botc.ST.roles["Bob"].role, "Monk", "script wand assign uses tracked textlist selection")
 
 -- ============================================================
-section("28. Notebook Uses Book Model")
+section("29. Notebook Uses Book Model")
 -- ============================================================
 reset_state()
 local notebook = minetest.registered_tools["botc_storyteller:notebook"]
@@ -1049,8 +1058,22 @@ assert_true(notebook.mesh == "book_feather.obj", "notebook uses book mesh")
 assert_true(notebook.inventory_image == nil, "notebook has no 2D inventory image (mesh driven)")
 assert_true(notebook.wield_scale ~= nil, "notebook has wield_scale")
 
+-- Notebook color: verify formspec includes color dropdown and saving preserves it
+reset_state()
+botc.ST.player_notes["Alice"] = {}
+botc.ST.player_notes["Alice"]["Bob"] = {public = "suspicious", private = "evil vibes", color = "#ff7700"}
+local entry = botc.ST.player_notes["Alice"]["Bob"]
+assert_eq(entry.public, "suspicious", "notebook entry public")
+assert_eq(entry.private, "evil vibes", "notebook entry private")
+assert_eq(entry.color, "#ff7700", "notebook entry color stored")
+-- Verify legacy string note still works (no color)
+botc.ST.player_notes["Alice"]["Charlie"] = "ok"
+local legacy = botc.ST.player_notes["Alice"]["Charlie"]
+assert_eq(type(legacy), "string", "legacy note is string")
+assert_eq(legacy, "ok", "legacy note value")
+
 -- ============================================================
-section("29. Vote Block Claiming While Possessing")
+section("30. Vote Block Claiming While Possessing")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1092,7 +1115,7 @@ assert_eq(botc.ST.vote_blocks[ph].owner, "Alice", "ownership still Alice after p
 botc.ST._possession["StorytellerX"] = nil
 
 -- ============================================================
-section("30. Fake Player HUD Position Uses Real Entity (not 0,0,0)")
+section("31. Fake Player HUD Position Uses Real Entity (not 0,0,0)")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1135,7 +1158,7 @@ assert_true(pos2.x == 9 and pos2.y == 9 and pos2.z == 9,
     "HUD position still resolves correctly after replacement")
 
 -- ============================================================
-section("31. Wand Raycast Stops at Solid Node (no through-wall targeting)")
+section("32. Wand Raycast Stops at Solid Node (no through-wall targeting)")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1164,7 +1187,7 @@ assert_true(mock_formspecs["StorytellerX"] ~= nil, "player selection UI shown in
 minetest.raycast = _orig_raycast2
 
 -- ============================================================
-section("32. Dead Players Cannot Nominate (botc_guide 5.2.2)")
+section("33. Dead Players Cannot Nominate (botc_guide 5.2.2)")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1217,7 +1240,7 @@ assert_true(botc.ST.nominations[botc.ST.current_day] == nil or not botc.ST.nomin
     "nomination wand does not accept a dead player as nominator")
 
 -- ============================================================
-section("33. Real Player Model + Dead/Fake Transparency")
+section("34. Real Player Model + Dead/Fake Transparency")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
@@ -1333,7 +1356,7 @@ assert_eq(bob_props.visual_size.x, 0, "ghost.lua globalstep does not un-hide a p
 botc.pyre_show_player("Bob")
 
 -- ============================================================
-section("34. Fake Player Skins (skinsdb integration)")
+section("35. Fake Player Skins (skinsdb integration)")
 -- ============================================================
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}

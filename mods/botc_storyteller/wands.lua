@@ -61,17 +61,30 @@ function botc.show_notebook_formspec(viewer, target)
     local entry = notes[target]
     local pub_text = ""
     local priv_text = ""
+    local current_color = ""
     if type(entry) == "table" then
         pub_text = entry.public or ""
         priv_text = entry.private or ""
+        current_color = entry.color or ""
     elseif type(entry) == "string" then
         priv_text = entry
     end
-    local fs = "size[8,9]label[0.5,0.3;Notes for " .. minetest.formspec_escape(target) .. "]"
+    local color_idx = 0
+    if current_color ~= "" then
+        for i, name in ipairs(NOTE_COLORS) do
+            if NOTE_COLOR_HEX[name] == current_color then
+                color_idx = i - 1
+                break
+            end
+        end
+    end
+    local fs = "size[8,10]label[0.5,0.3;Notes for " .. minetest.formspec_escape(target) .. "]"
     fs = fs .. "label[0.5,0.8;Public (shown over player's head)]"
     fs = fs .. "textarea[0.5,1.2;7,1;note_public;;" .. minetest.formspec_escape(pub_text) .. "]"
     fs = fs .. "label[0.5,2.7;Private (notebook only)]"
-    fs = fs .. "textarea[0.5,3.1;7,4;note_private;;" .. minetest.formspec_escape(priv_text) .. "]"
+    fs = fs .. "textarea[0.5,3.1;7,3;note_private;;" .. minetest.formspec_escape(priv_text) .. "]"
+    fs = fs .. "label[0.5,6.5;Color]"
+    fs = fs .. "dropdown[1.5,6.4;5,0.5;note_color;White,Red,Orange,Yellow,Green,Cyan,Blue,Purple,Pink,Gray;" .. color_idx .. "]"
     fs = fs .. "button[0.5,7.5;2.5,0.8;note_save;Save]"
     fs = fs .. "button[3.5,7.5;2.5,0.8;note_clear;Clear]"
     fs = fs .. "button_exit[6.5,7.5;1.5,0.8;close;Close]"
@@ -214,6 +227,13 @@ local WAND_TEXTURES = {
     revive_wand = "Wandresurect1.png",
     marker_wand = "wandstorytellernotes.png",
     time_wand = "WandTime.png",
+}
+
+local NOTE_COLORS = {"White", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink", "Gray"}
+local NOTE_COLOR_HEX = {
+    White = "#ffffff", Red = "#ff4444", Orange = "#ff7700",
+    Yellow = "#ffcc00", Green = "#44cc44", Cyan = "#44cccc",
+    Blue = "#4444ff", Purple = "#aa44ff", Pink = "#ff88cc", Gray = "#888888",
 }
 
 local function get_target(user, pointed_thing)
@@ -513,9 +533,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         local target = formname:match("^botc_storyteller:notebook_(.+)$")
         if fields.note_save then
             if not botc.ST.player_notes[name] then botc.ST.player_notes[name] = {} end
+            local selected_color = fields.note_color
             botc.ST.player_notes[name][target] = {
                 public = fields.note_public or "",
                 private = fields.note_private or "",
+                color = NOTE_COLOR_HEX[selected_color],
             }
             botc.save_state()
             minetest.chat_send_player(name, "Notes saved for " .. target)

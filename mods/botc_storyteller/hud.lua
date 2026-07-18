@@ -46,6 +46,9 @@ local function update_hud_for_player(viewer_name)
                     if entry.public and entry.public ~= "" then
                         table.insert(texts, entry.public)
                     end
+                    if entry.color then
+                        color = entry.color
+                    end
                 elseif entry ~= "" then
                     table.insert(texts, entry)
                 end
@@ -53,16 +56,18 @@ local function update_hud_for_player(viewer_name)
 
             if #texts > 0 then
                 local text = table.concat(texts, " ")
+                local waypoint_number = tonumber(color:gsub("#", "0x"), 16) or 0xFFFFFF
                 if player_huds[viewer_name][target] then
                     local id = player_huds[viewer_name][target]
                     player:hud_change(id, "text", text)
                     player:hud_change(id, "world_pos", pos)
+                    player:hud_change(id, "number", waypoint_number)
                 else
                     local id = player:hud_add({
                         type = "waypoint",
                         world_pos = pos,
                         text = text,
-                        number = tonumber(color:gsub("#", "0x"), 16) or 0xFFFFFF,
+                        number = waypoint_number,
                     })
                     player_huds[viewer_name][target] = id
                 end
