@@ -56,6 +56,13 @@ function botc.show_player_list_formspec(viewer, formname_prefix)
     minetest.show_formspec(viewer, formname_prefix .. "_list", fs)
 end
 
+local NOTE_COLORS = {"White", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink", "Gray"}
+local NOTE_COLOR_HEX = {
+    White = "#ffffff", Red = "#ff4444", Orange = "#ff7700",
+    Yellow = "#ffcc00", Green = "#44cc44", Cyan = "#44cccc",
+    Blue = "#4444ff", Purple = "#aa44ff", Pink = "#ff88cc", Gray = "#888888",
+}
+
 function botc.show_notebook_formspec(viewer, target)
     local notes = botc.ST.player_notes[viewer] or {}
     local entry = notes[target]
@@ -227,13 +234,6 @@ local WAND_TEXTURES = {
     revive_wand = "Wandresurect1.png",
     marker_wand = "wandstorytellernotes.png",
     time_wand = "WandTime.png",
-}
-
-local NOTE_COLORS = {"White", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink", "Gray"}
-local NOTE_COLOR_HEX = {
-    White = "#ffffff", Red = "#ff4444", Orange = "#ff7700",
-    Yellow = "#ffcc00", Green = "#44cc44", Cyan = "#44cccc",
-    Blue = "#4444ff", Purple = "#aa44ff", Pink = "#ff88cc", Gray = "#888888",
 }
 
 local function get_target(user, pointed_thing)

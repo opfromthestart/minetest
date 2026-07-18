@@ -438,10 +438,10 @@ function botc.manage_clock_hand()
     end
 
     if not big_hand_exists then
-        minetest.add_entity({ x = pos.x, y = pos.y + 0.6, z = pos.z }, "botc_storyteller:clock_hand")
+        minetest.add_entity({ x = pos.x, y = pos.y + 0.7, z = pos.z }, "botc_storyteller:clock_hand")
     end
     if not little_hand_exists then
-        minetest.add_entity({ x = pos.x, y = pos.y + 0.65, z = pos.z }, "botc_storyteller:clock_little_hand")
+        minetest.add_entity({ x = pos.x, y = pos.y + 0.75, z = pos.z }, "botc_storyteller:clock_little_hand")
     end
 end
 
