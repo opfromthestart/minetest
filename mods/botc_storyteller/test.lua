@@ -1236,30 +1236,34 @@ botc.ST.roles["Fakey"].alive = false
 botc.update_alive_texture("Fakey")
 assert_eq(fp_obj._texture_mod, botc.DEAD_TEXTURE_MOD, "dead fake player becomes ~0.4 alpha transparent")
 
--- Killing a real player applies the transparency texture_mod
+-- Killing a real player applies dead visual properties
 local kill_wand33 = minetest.registered_tools["botc_storyteller:kill_wand"]
 local bob_obj33 = minetest.get_player_by_name("Bob")
 kill_wand33.on_use("botc_storyteller:kill_wand", user_obj33, {type = "object", ref = bob_obj33})
 assert_false(botc.ST.roles["Bob"].alive, "Bob is dead after kill wand")
-assert_eq(mock_players["Bob"].texture_mod, botc.DEAD_TEXTURE_MOD, "dead real player becomes ~0.4 alpha transparent")
+local bob_props33 = mock_players["Bob"].props
+assert_true(bob_props33 and bob_props33.visual_size and bob_props33.visual_size.x == 0.8, "dead real player has shrunken visual_size")
 
--- Reviving a real player clears the transparency
+-- Reviving a real player restores normal visual_size
 local revive_wand33 = minetest.registered_tools["botc_storyteller:revive_wand"]
 revive_wand33.on_use("botc_storyteller:revive_wand", user_obj33, {type = "object", ref = bob_obj33})
 assert_true(botc.ST.roles["Bob"].alive, "Bob is alive after revive wand")
-assert_eq(mock_players["Bob"].texture_mod, "", "revived real player becomes fully opaque again")
+bob_props33 = mock_players["Bob"].props
+assert_true(bob_props33 and bob_props33.visual_size and bob_props33.visual_size.x == 1, "revived real player normal visual_size")
 
--- A player who is dead when they (re)join gets the transparency reapplied
+-- A player who is dead when they (re)join gets the dead visual_size reapplied
 botc.ST.roles["Bob"].alive = false
-mock_players["Bob"].texture_mod = nil -- simulate a fresh ObjectRef with no texture_mod set yet
+mock_players["Bob"].props = nil -- simulate a fresh ObjectRef
 simulate_join("Bob")
-assert_eq(mock_players["Bob"].texture_mod, botc.DEAD_TEXTURE_MOD, "rejoining while dead reapplies the transparency texture_mod")
+bob_props33 = mock_players["Bob"].props
+assert_true(bob_props33 and bob_props33.visual_size and bob_props33.visual_size.x == 0.8, "rejoining while dead reapplies shrunken visual_size")
 
--- A player who is alive when they (re)join stays fully opaque
+-- A player who is alive when they (re)join stays normal
 botc.ST.roles["Bob"].alive = true
-mock_players["Bob"].texture_mod = nil
+mock_players["Bob"].props = nil
 simulate_join("Bob")
-assert_eq(mock_players["Bob"].texture_mod, "", "rejoining while alive stays fully opaque")
+bob_props33 = mock_players["Bob"].props
+assert_true(bob_props33 and bob_props33.visual_size and bob_props33.visual_size.x == 1, "rejoining while alive stays normal visual_size")
 
 -- ============================================================
 section("34. Fake Player Skins (skinsdb integration)")

@@ -486,6 +486,12 @@ minetest.register_tool("botc_storyteller:time_wand", {
         botc.show_timer_formspec(name)
         return itemstack
     end,
+    on_secondary_use = function(itemstack, user, pointed_thing)
+        local name = user:get_player_name()
+        if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
+        botc.show_timer_formspec(name)
+        return itemstack
+    end,
 })
 
 minetest.register_tool("botc_storyteller:notebook", {

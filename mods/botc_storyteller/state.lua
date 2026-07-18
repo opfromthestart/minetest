@@ -113,11 +113,12 @@ function botc.update_alive_texture(name)
         return
     end
     local p = botc.get_player(name)
-    if not p or not p.set_texture_mod then return end
-    if data.alive then
-        p:set_texture_mod(botc.ALIVE_TEXTURE_MOD)
-    else
-        p:set_texture_mod(botc.DEAD_TEXTURE_MOD)
+    if p then
+        if data.alive then
+            p:set_properties({visual_size = {x = 1, y = 1}})
+        else
+            p:set_properties({visual_size = {x = 0.8, y = 0.8}})
+        end
     end
 end
 
