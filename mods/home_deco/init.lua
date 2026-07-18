@@ -177,9 +177,14 @@ local SHAPE_PREFIXES = {
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
 
 local SHAPE_SUFFIXES = {
+    -- Shape/numeric
     "_two_sides", "_alt_2", "_alt_1", "_alt",
     "_outer", "_inner", "_half",
     "_15", "_14", "_12", "_10", "_8", "_6", "_4", "_2", "_1",
+    -- Colors (common in cblocks, unifiedbricks, etc.)
+    "_black", "_blue", "_brown", "_cyan", "_dark_green", "_dark_grey",
+    "_green", "_grey", "_gray", "_magenta", "_orange", "_pink",
+    "_red", "_violet", "_purple", "_white", "_yellow",
 }
 
 local function is_shape_variant(name)
@@ -194,21 +199,17 @@ end
 
 local function extract_material(name)
     local base = name:gsub("^[^:]*:", "")
-    local had_shape = false
     for _, prefix in ipairs(SHAPE_PREFIXES) do
         local stripped = base:gsub("^" .. prefix, "")
         if stripped ~= base then
             base = stripped
-            had_shape = true
             break
         end
     end
-    if had_shape then
-        for _, suffix in ipairs(SHAPE_SUFFIXES) do
-            if base:find(suffix .. "$") then
-                base = base:gsub(suffix .. "$", "")
-                break
-            end
+    for _, suffix in ipairs(SHAPE_SUFFIXES) do
+        if base:find(suffix .. "$") then
+            base = base:gsub(suffix .. "$", "")
+            break
         end
     end
     return base
