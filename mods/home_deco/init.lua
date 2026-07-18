@@ -271,7 +271,7 @@ sfinv.register_page("home_deco:deco", {
             local itemname = fname:match("^hdd_item_(.+)$")
             if itemname then
                 local clean_name = itemname:gsub("_", ":")
-                player:get_inventory():add_item("main", clean_name)
+                player:get_inventory():add_item("main", clean_name .. " 99")
                 sfinv.set_player_inventory_formspec(player, context)
                 return true
             end
@@ -404,4 +404,13 @@ end)
 
 minetest.register_on_joinplayer(function(player)
     sfinv.set_player_inventory_formspec(player)
+end)
+
+minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+    if not placer then return end
+    local name = placer:get_player_name()
+    if not home_deco.player_home_state[name] then return end
+    -- Restore the placed item so blocks are never consumed
+    local inv = placer:get_inventory()
+    inv:add_item("main", newnode.name)
 end)
