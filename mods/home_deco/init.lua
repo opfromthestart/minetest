@@ -188,6 +188,13 @@ local SHAPE_PREFIXES = {
     "fence_rail_", "fence_gate_", "fence_", "gate_",
     "mese_post_light_", "all_faces_",
 }
+
+-- Manual overrides: if a specific item has no obvious base material
+-- from prefix/suffix stripping, map it here.
+-- e.g. "mese_post_light" (the block itself) should group with "wood".
+local MATERIAL_OVERRIDES = {
+    mese_post_light = "wood",
+}
 -- Must be sorted longest-first so we strip the most specific suffix
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
 
@@ -244,7 +251,7 @@ local function extract_material(name)
             end
         end
     end
-    return base
+    return MATERIAL_OVERRIDES[base] or base
 end
 
 local function get_node_list(base_name)
