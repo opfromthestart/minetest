@@ -113,16 +113,11 @@ function botc.update_alive_texture(name)
         return
     end
     local p = botc.get_player(name)
-    if p and p.get_properties then
-        local props = p:get_properties()
-        local textures = props and props.textures or {}
-        if #textures > 0 then
-            if data.alive then
-                textures[1] = textures[1]:gsub("%^%[opacity:[0-9]+", "")
-            elseif not textures[1]:find("opacity", 1, true) then
-                textures[1] = textures[1] .. botc.DEAD_TEXTURE_MOD
-            end
-            p:set_properties({textures = textures})
+    if p and p.is_player and p:is_player() then
+        -- Trigger a skin refresh so the ghost.lua texture opacity
+        -- wrapper can apply/remove the dead modifier automatically.
+        if minetest.global_exists("skins") and skins.update_player_skin then
+            skins.update_player_skin(p)
         end
     end
 end

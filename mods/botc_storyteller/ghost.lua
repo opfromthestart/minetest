@@ -1,27 +1,23 @@
 local ghost_timer = 0
 
-local function apply_dead_transparency(player)
-    local props = player:get_properties()
-    local textures = props and props.textures or {}
-    if #textures == 0 then return end
-    if textures[1]:find("opacity", 1, true) then return end
-    for i = 1, #textures do
-        if textures[i] ~= "" then
-            textures[i] = textures[i] .. botc.DEAD_TEXTURE_MOD
-        end
-    end
-    player:set_properties({textures = textures})
-end
+-- Wrap player_api.set_textures to append opacity for dead players.
+-- skinsdb calls this every time it sets a skin, so this ensures
+-- the opacity modifier survives skin changes.
+if minetest.global_exists("player_api") and player_api.set_textures then
+    local _orig_set_textures = player_api.set_textures
 
-local function remove_dead_transparency(player)
-    local props = player:get_properties()
-    local textures = props and props.textures or {}
-    if #textures == 0 then return end
-    if not textures[1]:find("opacity", 1, true) then return end
-    for i = 1, #textures do
-        textures[i] = textures[i]:gsub("%^%[opacity:[0-9]+", "")
+    player_api.set_textures = function(player, textures)
+        local name = player:get_player_name()
+        local data = botc.ST.roles[name]
+        if data and not data.alive then
+            for i = 1, #textures do
+                if textures[i] ~= "" and not textures[i]:find("opacity", 1, true) then
+                    textures[i] = textures[i] .. botc.DEAD_TEXTURE_MOD
+                end
+            end
+        end
+        _orig_set_textures(player, textures)
     end
-    player:set_properties({textures = textures})
 end
 
 minetest.register_globalstep(function(dtime)
@@ -40,12 +36,10 @@ minetest.register_globalstep(function(dtime)
             player:set_nametag_attributes({
                 color = { r = 128, g = 128, b = 128, a = 128 },
             })
-            apply_dead_transparency(player)
         else
             player:set_nametag_attributes({
                 color = { r = 255, g = 255, b = 255, a = 255 },
             })
-            remove_dead_transparency(player)
         end
 
         -- Hide storyteller nametag during night to prevent cheating

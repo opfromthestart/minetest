@@ -1235,36 +1235,60 @@ botc.update_alive_texture("Fakey")
 assert_eq(fp_obj._texture_mod, botc.ALIVE_TEXTURE_MOD, "alive fake player is fully opaque")
 botc.ST.roles["Fakey"].alive = false
 botc.update_alive_texture("Fakey")
-assert_eq(fp_obj._texture_mod, botc.DEAD_TEXTURE_MOD, "dead fake player becomes ~0.4 alpha transparent")
+assert_eq(fp_obj._texture_mod, botc.DEAD_TEXTURE_MOD, "dead fake player becomes transparent")
 
--- Killing a real player applies the dead texture modifier
+-- Mock skinsdb API for real-player transparency tests.
+-- ghost.lua wraps player_api.set_textures to append opacity for dead players.
+-- Here we simulate that by making skins.update_player_skin call set_properties
+-- with the opacity modifier when the player is dead.
+_G.player_api = _G.player_api or {}
+_G.player_api.set_textures = function(player, textures)
+    local name = player:get_player_name()
+    local data = botc.ST.roles[name]
+    if data and not data.alive then
+        for i = 1, #textures do
+            if textures[i] ~= "" then
+                textures[i] = textures[i] .. botc.DEAD_TEXTURE_MOD
+            end
+        end
+    end
+    player:set_properties({textures = textures})
+end
+_G.skins = {update_player_skin = function(player)
+    player_api.set_textures(player, {"character.png", "", "", ""})
+end}
+
+-- Kill wand applies dead texture via skins API
 local kill_wand33 = minetest.registered_tools["botc_storyteller:kill_wand"]
 local bob_obj33 = minetest.get_player_by_name("Bob")
 kill_wand33.on_use("botc_storyteller:kill_wand", user_obj33, {type = "object", ref = bob_obj33})
 assert_false(botc.ST.roles["Bob"].alive, "Bob is dead after kill wand")
 local bob_textures = mock_players["Bob"].props and mock_players["Bob"].props.textures or {}
-assert_true(#bob_textures > 0 and bob_textures[1]:find("opacity", 1, true), "dead real player texture gets opacity modifier")
+assert_true(#bob_textures > 0 and bob_textures[1]:find("opacity", 1, true), "dead player texture has opacity")
 
--- Reviving a real player clears the texture modifier
+-- Revive wand clears opacity via skin refresh
 local revive_wand33 = minetest.registered_tools["botc_storyteller:revive_wand"]
 revive_wand33.on_use("botc_storyteller:revive_wand", user_obj33, {type = "object", ref = bob_obj33})
 assert_true(botc.ST.roles["Bob"].alive, "Bob is alive after revive wand")
 bob_textures = mock_players["Bob"].props and mock_players["Bob"].props.textures or {}
-assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), "revived real player texture has no opacity modifier")
+assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), "revived texture has no opacity")
 
--- A player who is dead when they (re)join gets the transparency reapplied
+-- Dead player rejoining gets opacity reapplied
 botc.ST.roles["Bob"].alive = false
-mock_players["Bob"].props = nil -- simulate a fresh ObjectRef
+mock_players["Bob"].props = nil
 simulate_join("Bob")
 bob_textures = mock_players["Bob"].props and mock_players["Bob"].props.textures or {}
-assert_true(#bob_textures > 0 and bob_textures[1]:find("opacity", 1, true), "rejoining while dead reapplies opacity modifier")
+assert_true(#bob_textures > 0 and bob_textures[1]:find("opacity", 1, true), "rejoin dead reapplies opacity")
 
--- A player who is alive when they (re)join stays normal
+-- Alive player rejoining stays normal
 botc.ST.roles["Bob"].alive = true
 mock_players["Bob"].props = nil
 simulate_join("Bob")
 bob_textures = mock_players["Bob"].props and mock_players["Bob"].props.textures or {}
-assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), "rejoining while alive stays normal")
+assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), "rejoin alive stays normal")
+
+_G.player_api = nil
+_G.skins = nil
 
 -- ============================================================
 section("34. Fake Player Skins (skinsdb integration)")
