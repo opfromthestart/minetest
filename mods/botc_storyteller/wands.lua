@@ -176,7 +176,7 @@ function botc.show_bag_formspec(pname)
         "label[6.5,0.5;Bag (click to select, then Remove)]" ..
         "textlist[0.5,1;5,8;bag_roles;" .. table.concat(left_entries, ",") .. ";0]" ..
         "textlist[6.5,1;5,6;bag_contents;" .. table.concat(right_entries, ",") .. ";0]" ..
-        "button[0.5,7.5;2.5,1;bag_remove;Remove Selected]" ..
+        "button[6.5,7.5;2.5,1;bag_remove;Remove Selected]" ..
         "label[0.5,9.5;" .. minetest.formspec_escape(stats) .. "]" ..
         "button[3,10.5;2.5,1;bag_passout;Pass Out Roles]" ..
         "button[6.5,10.5;2.5,1;bag_close;Close]" ..
