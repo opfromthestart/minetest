@@ -1,12 +1,26 @@
 local function raycast_player(user)
+    local user_name = user:get_player_name()
     local pos = user:get_pos()
     pos.y = pos.y + 1.5 -- eye level
     local dir = user:get_look_dir()
     local endpos = vector.add(pos, vector.multiply(dir, 20))
-    local ray = minetest.raycast(pos, endpos, false, false)
+    local ray = minetest.raycast(pos, endpos, true, false)
     for pt in ray do
-        if pt.type == "object" and pt.ref:is_player() then
-            return pt.ref:get_player_name()
+        if pt.type == "node" then
+            -- A solid node blocks line of sight; don't select players
+            -- standing behind walls or beyond obstructions.
+            return nil
+        elseif pt.type == "object" then
+            if pt.ref:is_player() then
+                local name = pt.ref:get_player_name()
+                if name ~= user_name then
+                    return name
+                end
+            end
+            local luaent = pt.ref:get_luaentity()
+            if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
+                if luaent.fake_name ~= user_name then return luaent.fake_name end
+            end
         end
     end
     return nil
@@ -34,11 +48,7 @@ function botc.show_marker_formspec(viewer, target)
 end
 
 function botc.show_player_list_formspec(viewer, formname_prefix)
-    local players = minetest.get_connected_players()
-    local items = {}
-    for _, p in ipairs(players) do
-        table.insert(items, p:get_player_name())
-    end
+    local items = botc.all_players()
     table.sort(items)
     if #items == 0 then
         minetest.chat_send_player(viewer, "No players online")
@@ -60,21 +70,133 @@ function botc.show_notebook_formspec(viewer, target)
     minetest.show_formspec(viewer, "botc_storyteller:notebook_" .. target, fs)
 end
 
+function botc.show_script_assign_formspec(name, target)
+    if not botc.ST.script then
+        minetest.chat_send_player(name, "No script loaded")
+        return
+    end
+    local fs = "size[8,12]label[0.5,0.5;Assign role to " .. target .. "]textlist[0.5,1;7,8;roles;"
+    local items = {}
+    for _, entry in ipairs(botc.ST.script) do
+        local rname = botc.resolve_name(entry)
+        if rname then
+            table.insert(items, rname)
+        end
+    end
+    fs = fs .. table.concat(items, ",") .. "]"
+    fs = fs .. "button[0.5,9.2;3,1;assign;Assign]button[4,9.2;3,1;cancel;Cancel]"
+    fs = fs .. "button[0.5,10.5;7,1;build_bag;Build Bag]"
+    minetest.show_formspec(name, "botc_storyteller:script_wand_" .. target, fs)
+end
+
+function botc.show_bag_formspec(pname)
+    if not botc.ST.script then
+        minetest.show_formspec(pname, "botc_storyteller:bag",
+            "size[8,4]" ..
+            "label[0.5,1;Load a script first (/botc_script filename.json)]" ..
+            "button[2.5,2.5;3,1;bag_close;Close]"
+        )
+        return
+    end
+
+    local teams = {townsfolk={}, outsider={}, minion={}, demon={}}
+    for _, entry in ipairs(botc.ST.script) do
+        local team = botc.resolve_team(entry)
+        local name = botc.resolve_name(entry)
+        if teams[team] then
+            table.insert(teams[team], {id = entry.id, name = name})
+        end
+    end
+    local team_order = {"townsfolk", "outsider", "minion", "demon"}
+    local team_labels = {townsfolk="Townsfolk", outsider="Outsiders", minion="Minions", demon="Demons"}
+
+    local left_entries = {}
+    for _, team in ipairs(team_order) do
+        local roles = teams[team]
+        if #roles > 0 then
+            table.insert(left_entries, "#" .. team_labels[team])
+            for _, r in ipairs(roles) do
+                table.insert(left_entries, r.name)
+            end
+        end
+    end
+
+    local right_entries = {}
+    for _, team in ipairs(team_order) do
+        local has_any = false
+        for _, r in ipairs(teams[team]) do
+            local count = botc.ST.bag[r.id] or 0
+            if count > 0 then
+                if not has_any then
+                    table.insert(right_entries, "#" .. team_labels[team])
+                    has_any = true
+                end
+                table.insert(right_entries, count .. "x " .. r.name)
+            end
+        end
+    end
+    if #right_entries == 0 then
+        table.insert(right_entries, "(empty)")
+    end
+
+    local player_count = 0
+    for _, p in ipairs(minetest.get_connected_players()) do
+        local pn = p:get_player_name()
+        if not pn:find("^#") and not minetest.check_player_privs(pn, {storyteller=true}) then
+            player_count = player_count + 1
+        end
+    end
+    local base = botc.get_team_counts(player_count) or {townsfolk=0, outsider=0, minion=0, demon=0}
+
+    local actual = {townsfolk=0, outsider=0, minion=0, demon=0}
+    for id, count in pairs(botc.ST.bag) do
+        local team = botc.resolve_team(id)
+        if actual[team] then
+            actual[team] = actual[team] + count
+        end
+    end
+
+    local stats = string.format("Town: %d/%d  Outsiders: %d/%d  Minions: %d/%d  Demon: %d/%d",
+        actual.townsfolk, base.townsfolk,
+        actual.outsider, base.outsider,
+        actual.minion, base.minion,
+        actual.demon, base.demon)
+
+    minetest.show_formspec(pname, "botc_storyteller:bag",
+        "size[12,12]" ..
+        "label[0.5,0.5;Available Roles (click to add)]" ..
+        "label[6.5,0.5;Bag (click to select, then Remove)]" ..
+        "textlist[0.5,1;5,8;bag_roles;" .. table.concat(left_entries, ",") .. ";0]" ..
+        "textlist[6.5,1;5,6;bag_contents;" .. table.concat(right_entries, ",") .. ";0]" ..
+        "button[0.5,7.5;2.5,1;bag_remove;Remove Selected]" ..
+        "label[0.5,9.5;" .. minetest.formspec_escape(stats) .. "]" ..
+        "button[3,10.5;2.5,1;bag_passout;Pass Out Roles]" ..
+        "button[6.5,10.5;2.5,1;bag_close;Close]" ..
+        "button[9.5,10.5;2.5,1;bag_clear;Clear]"
+    )
+end
+
 local WAND_TEXTURES = {
-    script_wand = "default_stick.png^[colorize:#ffaa00:128",
-    nomination_wand = "default_stick.png^[colorize:#4488ff:128",
-    execution_wand = "default_stick.png^[colorize:#ff2222:128",
-    kill_wand = "default_stick.png^[colorize:#666666:128",
-    revive_wand = "default_stick.png^[colorize:#44ff44:128",
-    marker_wand = "default_stick.png^[colorize:#ff44ff:128",
-    time_wand = "default_stick.png^[colorize:#ffff44:128",
+    script_wand = "Wandselectscript.png",
+    nomination_wand = "Wandndemblemnominated.png",
+    execution_wand = "Wandandemblemexicute.png",
+    kill_wand = "wandkill.png",
+    revive_wand = "Wandresurect1.png",
+    marker_wand = "wandstorytellernotes.png",
+    time_wand = "WandTime.png",
 }
 
 local function get_target(user, pointed_thing)
+    local user_name = user:get_player_name()
     if pointed_thing.type == "object" then
         local ref = pointed_thing.ref
-        if ref and ref:is_player() then
-            return ref:get_player_name()
+        if ref:is_player() then
+            local name = ref:get_player_name()
+            if name ~= user_name then return name end
+        end
+        local luaent = ref:get_luaentity()
+        if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
+            if luaent.fake_name ~= user_name then return luaent.fake_name end
         end
     elseif pointed_thing.type == "nothing" then
         return raycast_player(user)
@@ -83,6 +205,7 @@ local function get_target(user, pointed_thing)
 end
 
 local nomination_step1 = {} -- { [username] = nominator }
+local script_selection = {}  -- { [formname] = selected_index } for textlist+button pattern
 
 -- Script wand
 minetest.register_tool("botc_storyteller:script_wand", {
@@ -92,25 +215,20 @@ minetest.register_tool("botc_storyteller:script_wand", {
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
         local target = get_target(user, pointed_thing)
-        if not target then return itemstack end
+        if not target then
+            if not botc.ST.script then
+                minetest.chat_send_player(name, "No script loaded. Use /botc_loadscript first.")
+            else
+                botc.show_player_list_formspec(name, "botc_storyteller:wand_script")
+            end
+            return itemstack
+        end
         if not botc.ST.script then
             minetest.chat_send_player(name, "No script loaded. Use /botc_loadscript first.")
             return itemstack
         end
-        -- Build formspec
-        local fs = "size[8,10]label[0.5,0.5;Assign role to " .. target .. "]textlist[0.5,1;7,8;roles;"
-        local items = {}
-        for _, entry in ipairs(botc.ST.script) do
-            table.insert(items, botc.resolve_name(entry))
-        end
-        fs = fs .. table.concat(items, ",") .. "]"
-        fs = fs .. "button[0.5,9.2;3,1;assign;Assign]button[4,9.2;3,1;cancel;Cancel]"
-        fs = fs .. "field_close_on_enter[roles;false]"
-        minetest.show_formspec(name, "botc_storyteller:script_wand_" .. target, fs)
+        botc.show_script_assign_formspec(name, target)
         return itemstack
-    end,
-    on_place = function(itemstack, user, pointed_thing)
-        return itemstack -- right-click does nothing
     end,
 })
 
@@ -129,12 +247,20 @@ minetest.register_tool("botc_storyteller:nomination_wand", {
             botc.ST.nominations[day] = { nominators = {}, nominees = {} }
         end
         local target = get_target(user, pointed_thing)
-        if not target then return itemstack end
+        if not target then
+            botc.show_player_list_formspec(name, "botc_storyteller:wand_nomination")
+            return itemstack
+        end
 
-        if nomination_step1[name] then
-            -- Step 2: the nominee
-            local nominator = nomination_step1[name]
-            nomination_step1[name] = nil
+        local actor = botc.resolve_actor(name)
+        if nomination_step1[actor] then
+            local nominator = nomination_step1[actor]
+            nomination_step1[actor] = nil
+            local nom_ok, nom_err = botc.check_nomination(nominator, target)
+            if not nom_ok then
+                minetest.chat_send_player(name, nom_err)
+                return itemstack
+            end
             if botc.ST.nominations[day].nominators[nominator] then
                 minetest.chat_send_player(name, nominator .. " has already nominated today")
                 return itemstack
@@ -149,10 +275,16 @@ minetest.register_tool("botc_storyteller:nomination_wand", {
             botc.ST.clock_nominee = target
             botc.ST.clock_state = "nominating"
             botc.save_state()
+            botc.manage_clock_hand()
             minetest.chat_send_all(minetest.colorize("#ffaa00", nominator .. " nominates " .. target .. " for execution!"))
         else
             -- Step 1: the nominator
-            nomination_step1[name] = target
+            local ndata = botc.ST.roles[target]
+            if ndata and not ndata.alive then
+                minetest.chat_send_player(name, target .. " is dead and cannot nominate")
+                return itemstack
+            end
+            nomination_step1[actor] = target
             minetest.chat_send_player(name, "Nominator set: " .. target .. ". Now punch the nominee.")
         end
         return itemstack
@@ -166,17 +298,48 @@ minetest.register_tool("botc_storyteller:execution_wand", {
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
         local target = get_target(user, pointed_thing)
-        if not target then return itemstack end
+        if not target then
+            botc.show_player_list_formspec(name, "botc_storyteller:wand_execution")
+            return itemstack
+        end
         if not botc.ST.execution_zone then
             minetest.chat_send_player(name, "No execution zone set. Use /botc_exezone set")
             return itemstack
         end
-        local player = minetest.get_player_by_name(target)
+        local player = botc.get_player(target)
         if not player then
             minetest.chat_send_player(name, "Player " .. target .. " not online")
             return itemstack
         end
-        player:set_pos(botc.ST.execution_zone)
+        local ez = botc.ST.execution_zone
+        local epos = {x = ez.x, y = ez.y, z = ez.z}
+        if botc.is_execution_zone_pyre() then
+            epos = {x = ez.x + -0.4, y = ez.y, z = ez.z}
+            botc.pyre_spawn_fire(ez)
+            if minetest.get_player_by_name(target) then
+                player:set_physics_override({gravity = 0, speed = 0, jump = 0})
+            end
+            minetest.after(13.5, function()
+                local data = botc.ST.roles[target]
+                if data and data.alive then
+                    data.alive = false
+                    botc.sync_vote_block_for_player(target)
+                    botc.update_alive_texture(target)
+                    if botc.is_execution_zone_pyre() then
+                        botc.pyre_hide_player(target)
+                    end
+                    botc.save_state()
+                    minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
+                end
+            end)
+            minetest.after(17, function()
+                local p = minetest.get_player_by_name(target)
+                if p then
+                    p:set_physics_override({gravity = 1, speed = 1, jump = 1})
+                end
+            end)
+        end
+        player:set_pos(epos)
         minetest.chat_send_player(name, target .. " summoned to execution zone")
         return itemstack
     end,
@@ -189,13 +352,21 @@ minetest.register_tool("botc_storyteller:kill_wand", {
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
         local target = get_target(user, pointed_thing)
-        if not target then return itemstack end
+        if not target then
+            botc.show_player_list_formspec(name, "botc_storyteller:wand_kill")
+            return itemstack
+        end
         local data = botc.ST.roles[target]
         if not data then
             minetest.chat_send_player(name, target .. " has no role assigned")
             return itemstack
         end
         data.alive = false
+        botc.sync_vote_block_for_player(target)
+        botc.update_alive_texture(target)
+        if botc.is_execution_zone_pyre() then
+            botc.pyre_hide_player(target)
+        end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
         return itemstack
@@ -209,7 +380,10 @@ minetest.register_tool("botc_storyteller:revive_wand", {
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
         local target = get_target(user, pointed_thing)
-        if not target then return itemstack end
+        if not target then
+            botc.show_player_list_formspec(name, "botc_storyteller:wand_revive")
+            return itemstack
+        end
         local data = botc.ST.roles[target]
         if not data then
             minetest.chat_send_player(name, target .. " has no role assigned")
@@ -217,6 +391,11 @@ minetest.register_tool("botc_storyteller:revive_wand", {
         end
         data.alive = true
         data.dead_vote_used = false
+        if data._pyre_hidden then
+            botc.pyre_show_player(target)
+        end
+        botc.sync_vote_block_for_player(target)
+        botc.update_alive_texture(target)
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#44ff44", target .. " has been revived!"))
         return itemstack
@@ -254,11 +433,13 @@ minetest.register_tool("botc_storyteller:time_wand", {
             botc.ST.clock_state = "idle"
             botc.ST.clock_nominator = nil
             botc.ST.clock_nominee = nil
-            minetest.set_timeofday(0.5)
+            botc.ST.execution_target = nil
+            botc.ST.current_timeofday = 0.50
         elseif new_phase == "evening" then
-            minetest.set_timeofday(0.75)
+            botc.ST.current_timeofday = 0.783
         elseif new_phase == "night" then
-            minetest.set_timeofday(0.2)
+            botc.ST.execution_target = nil
+            botc.ST.current_timeofday = 0.0
         end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ffaa00", "Time is now: " .. new_phase:upper()))
@@ -268,7 +449,8 @@ minetest.register_tool("botc_storyteller:time_wand", {
 
 minetest.register_tool("botc_storyteller:notebook", {
     description = "Player Notebook",
-    inventory_image = "default_book.png",
+    wield_scale = {x = 2, y = 2, z = 2},
+    mesh = "book_feather.obj",
     on_use = function(itemstack, user, pointed_thing)
         local name = user:get_player_name()
         local target = get_target(user, pointed_thing)
@@ -309,10 +491,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
             if selected and (selected.type == "DCL" or selected.type == "CHG") then
-                local players = minetest.get_connected_players()
-                local names = {}
-                for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
-                table.sort(names)
+                                local names = botc.all_players()
+                                table.sort(names)
                 if selected.index and names[selected.index] then
                     botc.show_notebook_formspec(name, names[selected.index])
                 end
@@ -324,17 +504,212 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     -- Remaining formspecs require storyteller priv
     if not is_st then return end
 
+    -- Wand player list selection: script
+    if formname == "botc_storyteller:wand_script_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    botc.show_script_assign_formspec(name, names[selected.index])
+                end
+            end
+        end
+        return true
+    end
+
+    -- Wand player list selection: nomination
+    if formname == "botc_storyteller:wand_nomination_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    local target = names[selected.index]
+                    local day = botc.ST.current_day
+                    if not botc.ST.nominations[day] then
+                        botc.ST.nominations[day] = { nominators = {}, nominees = {} }
+                    end
+                    if nomination_step1[name] then
+                        local nominator = nomination_step1[name]
+                        nomination_step1[name] = nil
+                        local nom_ok, nom_err = botc.check_nomination(nominator, target)
+                        if not nom_ok then
+                            minetest.chat_send_player(name, nom_err)
+                        elseif botc.ST.nominations[day].nominators[nominator] then
+                            minetest.chat_send_player(name, nominator .. " has already nominated today")
+                        elseif botc.ST.nominations[day].nominees[target] then
+                            minetest.chat_send_player(name, target .. " has already been nominated today")
+                        else
+                            botc.ST.nominations[day].nominators[nominator] = true
+                            botc.ST.nominations[day].nominees[target] = true
+                            botc.ST.clock_nominator = nominator
+                            botc.ST.clock_nominee = target
+                            botc.ST.clock_state = "nominating"
+                            botc.save_state()
+                            botc.manage_clock_hand()
+                            minetest.chat_send_all(minetest.colorize("#ffaa00", nominator .. " nominates " .. target .. " for execution!"))
+                        end
+                    else
+                        local ndata = botc.ST.roles[target]
+                        if ndata and not ndata.alive then
+                            minetest.chat_send_player(name, target .. " is dead and cannot nominate")
+                        else
+                            nomination_step1[name] = target
+                            minetest.chat_send_player(name, "Nominator set: " .. target .. ". Now select the nominee.")
+                        end
+                    end
+                end
+            end
+        end
+        return true
+    end
+
+    -- Wand player list selection: execution
+    if formname == "botc_storyteller:wand_execution_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    local target = names[selected.index]
+                    if target == name then
+                        minetest.chat_send_player(name, "You cannot target yourself")
+                        return true
+                    end
+                    if not botc.ST.execution_zone then
+                        minetest.chat_send_player(name, "No execution zone set. Use /botc_exezone set")
+                    else
+                        local player = botc.get_player(target)
+                        if player then
+                            local ez = botc.ST.execution_zone
+                            local epos = {x = ez.x, y = ez.y, z = ez.z}
+                            if botc.is_execution_zone_pyre() then
+                                epos = {x = ez.x + -0.4, y = ez.y, z = ez.z}
+                                botc.pyre_spawn_fire(ez)
+                                if minetest.get_player_by_name(target) then
+                                    player:set_physics_override({gravity = 0, speed = 0, jump = 0})
+                                end
+                                minetest.after(13.5, function()
+                                    local data = botc.ST.roles[target]
+                                    if data and data.alive then
+                                        data.alive = false
+                                        botc.sync_vote_block_for_player(target)
+                                        botc.update_alive_texture(target)
+                                        if botc.is_execution_zone_pyre() then
+                                            botc.pyre_hide_player(target)
+                                        end
+                                        botc.save_state()
+                                        minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been executed!"))
+                                    end
+                                end)
+                                minetest.after(17, function()
+                                    local p = minetest.get_player_by_name(target)
+                                    if p then
+                                        p:set_physics_override({gravity = 1, speed = 1, jump = 1})
+                                    end
+                                end)
+                            end
+                            player:set_pos(epos)
+                            minetest.chat_send_player(name, target .. " summoned to execution zone")
+                        end
+                    end
+                end
+            end
+        end
+        return true
+    end
+
+    -- Wand player list selection: kill
+    if formname == "botc_storyteller:wand_kill_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    local target = names[selected.index]
+                    if target == name then
+                        minetest.chat_send_player(name, "You cannot target yourself")
+                        return true
+                    end
+                    local data = botc.ST.roles[target]
+                    if not data then
+                        minetest.chat_send_player(name, target .. " has no role assigned")
+                    else
+                        data.alive = false
+                        botc.sync_vote_block_for_player(target)
+                        botc.update_alive_texture(target)
+                        if botc.is_execution_zone_pyre() then
+                            botc.pyre_hide_player(target)
+                        end
+                        botc.save_state()
+                        minetest.chat_send_all(minetest.colorize("#ff4444", target .. " has been killed!"))
+                    end
+                end
+            end
+        end
+        return true
+    end
+
+    -- Wand player list selection: revive
+    if formname == "botc_storyteller:wand_revive_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL" or selected.type == "CHG") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    local target = names[selected.index]
+                    if target == name then
+                        minetest.chat_send_player(name, "You cannot target yourself")
+                        return true
+                    end
+                    local data = botc.ST.roles[target]
+                    if not data then
+                        minetest.chat_send_player(name, target .. " has no role assigned")
+                    else
+                        data.alive = true
+                        data.dead_vote_used = false
+                        if data._pyre_hidden then
+                            botc.pyre_show_player(target)
+                        end
+                        botc.sync_vote_block_for_player(target)
+                        botc.update_alive_texture(target)
+                        botc.save_state()
+                        minetest.chat_send_all(minetest.colorize("#44ff44", target .. " has been revived!"))
+                    end
+                end
+            end
+        end
+        return true
+    end
+
     -- Script wand assign
     if formname:match("^botc_storyteller:script_wand_") then
         local target = formname:match("^botc_storyteller:script_wand_(.+)$")
-        if fields.assign and fields.roles then
-            local selected = minetest.explode_textlist_event(fields.roles)
-            if selected and selected.type == "CHG" then
-                local idx = selected.index
-                if idx and botc.ST.script and botc.ST.script[idx] then
-                    local ok, msg = botc.assign_role(target, botc.ST.script[idx])
-                    minetest.chat_send_player(name, msg)
-                end
+        if not botc.ST.script then return true end
+        if fields.build_bag then
+            botc.show_bag_formspec(name)
+            return true
+        end
+        if fields.roles then
+            local ev = minetest.explode_textlist_event(fields.roles)
+            if ev and ev.type == "CHG" and ev.index then
+                script_selection[formname] = ev.index
+            end
+        end
+        if fields.assign then
+            local idx = script_selection[formname]
+            if idx and botc.ST.script[idx] then
+                local ok, msg = botc.assign_role(target, botc.ST.script[idx])
+                minetest.chat_send_player(name, msg)
+                script_selection[formname] = nil
+            else
+                minetest.chat_send_player(name, "Select a role from the list first")
             end
         end
         return true
@@ -398,14 +773,100 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         if fields.players then
             local selected = minetest.explode_textlist_event(fields.players)
             if selected and (selected.type == "DCL" or selected.type == "CHG") then
-                local players = minetest.get_connected_players()
-                local names = {}
-                for _, p in ipairs(players) do table.insert(names, p:get_player_name()) end
-                table.sort(names)
+                                local names = botc.all_players()
+                                table.sort(names)
                 if selected.index and names[selected.index] then
                     botc.show_marker_formspec(name, names[selected.index])
                 end
             end
+        end
+        return true
+    end
+
+    -- Bag formspec
+    if formname == "botc_storyteller:bag" then
+        if fields.bag_close or fields.quit then
+            return true
+        end
+
+        local refresh = false
+
+        if fields.bag_roles then
+            local ev = minetest.explode_textlist_event(fields.bag_roles)
+            if ev.type == "CHG" and ev.index then
+                local entries = {}
+                local team_order = {"townsfolk", "outsider", "minion", "demon"}
+                local grouped = {townsfolk={}, outsider={}, minion={}, demon={}}
+                for _, entry in ipairs(botc.ST.script) do
+                    local team = botc.resolve_team(entry)
+                    if grouped[team] then
+                        table.insert(grouped[team], entry)
+                    end
+                end
+                for _, team in ipairs(team_order) do
+                    for _, r in ipairs(grouped[team]) do
+                        table.insert(entries, r)
+                    end
+                end
+                if ev.index <= #entries then
+                    local role = entries[ev.index]
+                    botc.ST.bag[role.id] = (botc.ST.bag[role.id] or 0) + 1
+                    botc.save_state()
+                    refresh = true
+                end
+            end
+        end
+
+        if fields.bag_remove then
+            local ev = fields.bag_contents and minetest.explode_textlist_event(fields.bag_contents)
+            if ev and ev.type == "CHG" and ev.index then
+                local bag_flat = {}
+                local team_order = {"townsfolk", "outsider", "minion", "demon"}
+                local grouped = {townsfolk={}, outsider={}, minion={}, demon={}}
+                for _, entry in ipairs(botc.ST.script) do
+                    local team = botc.resolve_team(entry)
+                    if grouped[team] then
+                        table.insert(grouped[team], entry)
+                    end
+                end
+                for _, team in ipairs(team_order) do
+                    for _, r in ipairs(grouped[team]) do
+                        local count = botc.ST.bag[r.id] or 0
+                        if count > 0 then
+                            table.insert(bag_flat, r)
+                        end
+                    end
+                end
+                if ev.index <= #bag_flat then
+                    local role = bag_flat[ev.index]
+                    botc.ST.bag[role.id] = botc.ST.bag[role.id] - 1
+                    if botc.ST.bag[role.id] <= 0 then
+                        botc.ST.bag[role.id] = nil
+                    end
+                    botc.save_state()
+                    refresh = true
+                end
+            end
+        end
+
+        if fields.bag_clear then
+            botc.ST.bag = {}
+            botc.save_state()
+            refresh = true
+        end
+
+        if fields.bag_passout then
+            local ok, msg = botc.passout_from_bag()
+            if ok then
+                minetest.chat_send_player(name, "Passed out roles from bag.")
+            else
+                minetest.chat_send_player(name, "Error: " .. msg)
+            end
+            return true
+        end
+
+        if refresh then
+            botc.show_bag_formspec(name)
         end
         return true
     end
@@ -419,4 +880,5 @@ minetest.override_item("botc_storyteller:kill_wand", { on_place = minetest.regis
 minetest.override_item("botc_storyteller:revive_wand", { on_place = minetest.registered_tools["botc_storyteller:revive_wand"].on_use })
 minetest.override_item("botc_storyteller:marker_wand", { on_place = minetest.registered_tools["botc_storyteller:marker_wand"].on_use })
 minetest.override_item("botc_storyteller:time_wand", { on_place = minetest.registered_tools["botc_storyteller:time_wand"].on_use })
+minetest.override_item("botc_storyteller:notebook", { on_place = minetest.registered_tools["botc_storyteller:notebook"].on_use })
 minetest.override_item("botc_storyteller:notebook", { on_place = minetest.registered_tools["botc_storyteller:notebook"].on_use })

@@ -216,3 +216,74 @@ function botc.passout(player_list)
 
     return true, "Passed out " .. count .. " roles:\n" .. table.concat(assigned, "\n")
 end
+
+function botc.passout_from_bag()
+    local players = {}
+    for _, p in ipairs(minetest.get_connected_players()) do
+        local pn = p:get_player_name()
+        if not pn:find("^#") and not minetest.check_player_privs(pn, {storyteller=true}) then
+            table.insert(players, pn)
+        end
+    end
+
+    local player_count = #players
+    if player_count == 0 then
+        return false, "No players to assign."
+    end
+
+    local bag_size = 0
+    for _, count in pairs(botc.ST.bag) do
+        bag_size = bag_size + count
+    end
+
+    if bag_size == 0 then
+        return false, "Bag is empty."
+    end
+
+    if bag_size ~= player_count then
+        return false, "Bag has " .. bag_size .. " roles but there are " .. player_count .. " players."
+    end
+
+    local pool = {}
+    for role_id, count in pairs(botc.ST.bag) do
+        for i = 1, count do
+            table.insert(pool, role_id)
+        end
+    end
+
+    for i = #pool, 2, -1 do
+        local j = math.random(i)
+        pool[i], pool[j] = pool[j], pool[i]
+    end
+
+    local shuffled = {}
+    for _, p in ipairs(players) do table.insert(shuffled, p) end
+    for i = #shuffled, 2, -1 do
+        local j = math.random(i)
+        shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+    end
+
+    local assigned = {}
+    for i, playername in ipairs(shuffled) do
+        local role_id = pool[i]
+        local team = botc.resolve_team(role_id)
+        local name = botc.resolve_name(role_id)
+        botc.ST.roles[playername] = {
+            role = name,
+            team = team,
+            alive = true,
+            dead_vote_used = false,
+            markers = {},
+        }
+        table.insert(assigned, playername .. " = " .. name)
+    end
+
+    botc.ST.current_day = 1
+    botc.ST.nominations = {}
+    botc.ST.phase = "night"
+    botc.ST.current_timeofday = 0.0
+    botc.ST.vote_blocks = {}
+    botc.save_state()
+
+    return true, "Passed out " .. player_count .. " roles:\n" .. table.concat(assigned, "\n")
+end
