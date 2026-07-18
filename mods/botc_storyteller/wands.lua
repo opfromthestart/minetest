@@ -683,6 +683,24 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
+    -- Wand player list selection: mark for execution (right-click, no summon)
+    if formname == "botc_storyteller:wand_execution_mark_list" then
+        if fields.players then
+            local selected = minetest.explode_textlist_event(fields.players)
+            if selected and (selected.type == "DCL") then
+                                local names = botc.all_players()
+                                table.sort(names)
+                if selected.index and names[selected.index] then
+                    local target = names[selected.index]
+                    botc.ST.execution_target = target
+                    botc.save_state()
+                    minetest.chat_send_all(minetest.colorize("#ff2222", target .. " has been marked for execution!"))
+                end
+            end
+        end
+        return true
+    end
+
     -- Wand player list selection: kill
     if formname == "botc_storyteller:wand_kill_list" then
         if fields.players then
@@ -972,7 +990,7 @@ minetest.override_item("botc_storyteller:execution_wand", {
     on_secondary_use = function(itemstack, user, pointed_thing)
         local name = user:get_player_name()
         if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
-        botc.show_player_list_formspec(name, "botc_storyteller:wand_execution")
+        botc.show_player_list_formspec(name, "botc_storyteller:wand_execution_mark")
         return itemstack
     end,
 })
