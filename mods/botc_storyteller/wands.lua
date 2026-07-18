@@ -340,6 +340,7 @@ minetest.register_tool("botc_storyteller:execution_wand", {
             end)
         end
         player:set_pos(epos)
+        player:set_velocity({x = 0, y = 0, z = 0})
         minetest.chat_send_player(name, target .. " summoned to execution zone")
         return itemstack
     end,
@@ -614,6 +615,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                 end)
                             end
                             player:set_pos(epos)
+                            player:set_velocity({x = 0, y = 0, z = 0})
                             minetest.chat_send_player(name, target .. " summoned to execution zone")
                         end
                     end
