@@ -104,8 +104,10 @@ minetest.register_globalstep(function(dtime)
 				context = default_context
 			end
 			if player_context[name] ~= context then
+				local old = player_context[name] or "(none)"
 				player_context[name] = context
 				set_player_context(name, context)
+				minetest.log("action", "[mumble] " .. name .. " entered zone, context: \"" .. old .. "\" -> \"" .. context .. "\"")
 			end
 		elseif player_zone_touched[name] then
 			-- sticky: context unchanged until next zone entry
@@ -118,8 +120,10 @@ minetest.register_globalstep(function(dtime)
 				context = default_context
 			end
 			if player_context[name] ~= context then
+				local old = player_context[name] or "(none)"
 				player_context[name] = context
 				set_player_context(name, context)
+				minetest.log("action", "[mumble] " .. name .. " context: \"" .. old .. "\" -> \"" .. context .. "\"")
 			end
 		end
 	end
