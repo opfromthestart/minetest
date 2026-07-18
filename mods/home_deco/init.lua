@@ -172,6 +172,7 @@ local NODES_PER_PAGE = 24
 local SHAPE_PREFIXES = {
     "stair_", "slab_", "slope_", "micro_", "panel_",
     "inner_stair_", "outer_stair_",
+    "fence_rail_", "fence_gate_", "fence_",
 }
 -- Must be sorted longest-first so we strip the most specific suffix
 table.sort(SHAPE_PREFIXES, function(a, b) return #a > #b end)
