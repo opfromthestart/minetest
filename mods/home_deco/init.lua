@@ -9,6 +9,7 @@ home_deco.player_home_state = {}
 home_deco.saved_player_inventory = {}
 home_deco._deco_page = {}
 home_deco._deco_search = {}
+home_deco._deco_variant = {}  -- base item name when viewing variants, nil otherwise
 
 local function load_state()
     local owners = storage:get_string("home_owners")
@@ -158,12 +159,30 @@ end
 -- sfinv creative block picker page
 local NODES_PER_PAGE = 24
 
-local function get_node_list()
+local function is_hidden_variant(name)
+    local base = name:gsub("^[^:]*:", "")
+    return base:find("^stair_") or base:find("^slab_")
+end
+
+local function strip_variant(name)
+    return name:gsub(":stair_", ":"):gsub(":slab_", ":")
+end
+
+local function get_node_list(base_name)
     local nodes = {}
     for name, def in pairs(minetest.registered_nodes) do
         if not def.groups.not_in_creative_inventory or def.groups.not_in_creative_inventory == 0 then
             local desc = def.description or name
-            table.insert(nodes, {name = name, desc = desc})
+            if base_name then
+                local stripped = strip_variant(name)
+                if stripped == base_name then
+                    table.insert(nodes, {name = name, desc = desc})
+                end
+            else
+                if not is_hidden_variant(name) then
+                    table.insert(nodes, {name = name, desc = desc})
+                end
+            end
         end
     end
     table.sort(nodes, function(a, b) return a.desc:lower() < b.desc:lower() end)
@@ -172,10 +191,13 @@ end
 
 local function build_deco_formspec(player, context)
     local name = player:get_player_name()
-    local nodes = get_node_list()
+    local variant = home_deco._deco_variant[name]
+    local nodes = get_node_list(variant)
     local search = home_deco._deco_search[name] or ""
 
-    -- Filter by search text
+    if variant then
+        search = ""
+    end
     if search ~= "" then
         local lower = search:lower()
         local filtered = {}
@@ -196,17 +218,23 @@ local function build_deco_formspec(player, context)
     local fs = ""
     local y_offset = 0.8
 
-    -- Search bar
-    fs = fs .. "field[0,0.1;6,0.7;hdd_search;;" .. minetest.formspec_escape(search) .. "]"
-    fs = fs .. "button[5.5,0.1;1,0.7;hdd_search_btn;Search]"
-    if search ~= "" then
-        fs = fs .. "button[6.5,0.1;1,0.7;hdd_search_clr;Clear]"
-        fs = fs .. "label[0,0.8;" .. minetest.formspec_escape(#nodes .. " matches") .. "]"
-        y_offset = 1.3
+    if variant then
+        local var_desc = variant:gsub("^[^:]*:", ""):gsub("_", " "):gsub("(%a)([%w]*)", function(a, b) return a:upper() .. b end)
+        fs = fs .. "label[0,0.0;" .. minetest.formspec_escape("Showing all variants of: " .. var_desc) .. "]"
+        fs = fs .. "button[0,0;1.5,0.7;hdd_variant_back;< Back]"
+        y_offset = 0.8
+    else
+        fs = fs .. "field[0,0.1;6,0.7;hdd_search;;" .. minetest.formspec_escape(search) .. "]"
+        fs = fs .. "button[5.5,0.1;1,0.7;hdd_search_btn;Search]"
+        if search ~= "" then
+            fs = fs .. "button[6.5,0.1;1,0.7;hdd_search_clr;Clear]"
+            fs = fs .. "label[0,0.8;" .. minetest.formspec_escape(#nodes .. " matches") .. "]"
+            y_offset = 1.3
+        end
     end
 
     if #nodes == 0 then
-        fs = fs .. "label[0," .. y_offset .. ";No items match your search.]"
+        fs = fs .. "label[0," .. y_offset .. ";No items to show.]"
         return fs
     end
 
@@ -228,7 +256,9 @@ local function build_deco_formspec(player, context)
     if page < total_pages then
         fs = fs .. "button[6," .. (y_offset + 3.2) .. ";2,0.8;hdd_page_next;Next >>]"
     end
-    fs = fs .. "label[2.5," .. (y_offset + 3.4) .. ";" .. (page + 1) .. " / " .. (total_pages + 1) .. "]"
+    if total_pages >= 0 then
+        fs = fs .. "label[2.5," .. (y_offset + 3.4) .. ";" .. (page + 1) .. " / " .. (total_pages + 1) .. "]"
+    end
 
     return fs
 end
@@ -245,6 +275,13 @@ sfinv.register_page("home_deco:deco", {
     end,
     on_player_receive_fields = function(self, player, context, fields)
         local name = player:get_player_name()
+        if fields.hdd_variant_back then
+            home_deco._deco_variant[name] = nil
+            home_deco._deco_page[name] = 0
+            home_deco._deco_search[name] = ""
+            sfinv.set_player_inventory_formspec(player, context)
+            return true
+        end
         if fields.hdd_search_clr then
             home_deco._deco_search[name] = ""
             home_deco._deco_page[name] = 0
@@ -271,8 +308,18 @@ sfinv.register_page("home_deco:deco", {
             local itemname = fname:match("^hdd_item_(.+)$")
             if itemname then
                 local clean_name = itemname:gsub("_", ":")
-                player:get_inventory():add_item("main", clean_name .. " 99")
-                sfinv.set_player_inventory_formspec(player, context)
+                local variant = home_deco._deco_variant[name]
+                if variant then
+                    -- In variant view: add the item to inventory
+                    player:get_inventory():add_item("main", clean_name .. " 99")
+                    sfinv.set_player_inventory_formspec(player, context)
+                else
+                    -- In main view: open variant view for this item
+                    home_deco._deco_variant[name] = strip_variant(clean_name)
+                    home_deco._deco_page[name] = 0
+                    home_deco._deco_search[name] = ""
+                    sfinv.set_player_inventory_formspec(player, context)
+                end
                 return true
             end
         end
@@ -346,6 +393,9 @@ function home_deco.exit_home(player)
     home_deco.saved_player_inventory[name] = nil
 
     home_deco.player_home_state[name] = false
+    home_deco._deco_page[name] = nil
+    home_deco._deco_search[name] = nil
+    home_deco._deco_variant[name] = nil
     sfinv.set_player_inventory_formspec(player)
 end
 
