@@ -200,6 +200,11 @@ local function is_shape_variant(name)
             return true
         end
     end
+    for _, suffix in ipairs(SHAPE_SUFFIXES) do
+        if base:find(suffix .. "$") then
+            return true
+        end
+    end
     return false
 end
 
