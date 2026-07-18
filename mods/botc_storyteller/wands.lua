@@ -60,13 +60,24 @@ end
 
 function botc.show_notebook_formspec(viewer, target)
     local notes = botc.ST.player_notes[viewer] or {}
-    local current = notes[target] or ""
-    local fs = "size[8,5]label[0.5,0.3;Notes for " .. minetest.formspec_escape(target) .. "]"
-    fs = fs .. "textarea[0.5,1;7,3;note_text;;" .. minetest.formspec_escape(current) .. "]"
-    fs = fs .. "button[0.5,4.2;2.5,0.8;note_save;Save]"
-    fs = fs .. "button[3.5,4.2;2.5,0.8;note_clear;Clear]"
-    fs = fs .. "button_exit[6.5,4.2;1.5,0.8;close;Close]"
-    fs = fs .. "field_close_on_enter[note_text;false]"
+    local entry = notes[target]
+    local pub_text = ""
+    local priv_text = ""
+    if type(entry) == "table" then
+        pub_text = entry.public or ""
+        priv_text = entry.private or ""
+    elseif type(entry) == "string" then
+        priv_text = entry
+    end
+    local fs = "size[8,9]label[0.5,0.3;Notes for " .. minetest.formspec_escape(target) .. "]"
+    fs = fs .. "label[0.5,0.8;Public (shown over player's head)]"
+    fs = fs .. "textarea[0.5,1.2;7,1;note_public;;" .. minetest.formspec_escape(pub_text) .. "]"
+    fs = fs .. "label[0.5,2.7;Private (notebook only)]"
+    fs = fs .. "textarea[0.5,3.1;7,4;note_private;;" .. minetest.formspec_escape(priv_text) .. "]"
+    fs = fs .. "button[0.5,7.5;2.5,0.8;note_save;Save]"
+    fs = fs .. "button[3.5,7.5;2.5,0.8;note_clear;Clear]"
+    fs = fs .. "button_exit[6.5,7.5;1.5,0.8;close;Close]"
+    fs = fs .. "field_close_on_enter[note_public;false]field_close_on_enter[note_private;false]"
     minetest.show_formspec(viewer, "botc_storyteller:notebook_" .. target, fs)
 end
 
@@ -496,20 +507,23 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     local is_st = minetest.check_player_privs(name, {storyteller = true})
 
     -- Notebook formspec (no priv needed)
-    if formname:match("^botc_storyteller:notebook_") then
+    if formname:match("^botc_storyteller:notebook_") and formname ~= "botc_storyteller:notebook_list" then
         local target = formname:match("^botc_storyteller:notebook_(.+)$")
         if fields.note_save then
             if not botc.ST.player_notes[name] then botc.ST.player_notes[name] = {} end
-            botc.ST.player_notes[name][target] = fields.note_text or ""
+            botc.ST.player_notes[name][target] = {
+                public = fields.note_public or "",
+                private = fields.note_private or "",
+            }
             botc.save_state()
-            minetest.chat_send_player(name, "Note saved for " .. target)
+            minetest.chat_send_player(name, "Notes saved for " .. target)
         end
         if fields.note_clear then
             if botc.ST.player_notes[name] then
                 botc.ST.player_notes[name][target] = nil
             end
             botc.save_state()
-            minetest.chat_send_player(name, "Note cleared for " .. target)
+            minetest.chat_send_player(name, "Notes cleared for " .. target)
         end
         return true
     end

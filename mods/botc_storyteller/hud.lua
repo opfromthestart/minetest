@@ -41,7 +41,14 @@ local function update_hud_for_player(viewer_name)
 
             local notes = botc.ST.player_notes[viewer_name]
             if notes and notes[target] then
-                table.insert(texts, notes[target])
+                local entry = notes[target]
+                if type(entry) == "table" then
+                    if entry.public and entry.public ~= "" then
+                        table.insert(texts, entry.public)
+                    end
+                elseif entry ~= "" then
+                    table.insert(texts, entry)
+                end
             end
 
             if #texts > 0 then
