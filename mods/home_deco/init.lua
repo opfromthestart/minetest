@@ -10,6 +10,8 @@ home_deco.saved_player_inventory = {}
 home_deco._deco_page = {}
 home_deco._deco_search = {}
 home_deco._deco_variant = {}  -- base item name when viewing variants, nil otherwise
+home_deco._saved_page = {}    -- page saved when entering variant view
+home_deco._saved_search = {}  -- search saved when entering variant view
 home_deco._last_context = {}  -- last known zone context per player, persisted
 home_deco._item_map = {}      -- {[playername] = {[btn_idx] = item_name}} for button decode
 home_deco._banned = {}        -- set of blacklisted item names
@@ -458,8 +460,10 @@ sfinv.register_page("home_deco:deco", {
         local name = player:get_player_name()
         if fields.hdd_variant_back then
             home_deco._deco_variant[name] = nil
-            home_deco._deco_page[name] = 0
-            home_deco._deco_search[name] = ""
+            home_deco._deco_page[name] = home_deco._saved_page[name] or 0
+            home_deco._deco_search[name] = home_deco._saved_search[name] or ""
+            home_deco._saved_page[name] = nil
+            home_deco._saved_search[name] = nil
             sfinv.set_player_inventory_formspec(player, context)
             return true
         end
@@ -502,6 +506,8 @@ sfinv.register_page("home_deco:deco", {
                     sfinv.set_player_inventory_formspec(player, context)
                 else
                     -- In main view: open variant view for this item
+                    home_deco._saved_page[name] = home_deco._deco_page[name] or 0
+                    home_deco._saved_search[name] = home_deco._deco_search[name] or ""
                     home_deco._deco_variant[name] = extract_material(clean_name)
                     home_deco._deco_page[name] = 0
                     home_deco._deco_search[name] = ""
@@ -583,6 +589,8 @@ function home_deco.exit_home(player)
     home_deco._deco_page[name] = nil
     home_deco._deco_search[name] = nil
     home_deco._deco_variant[name] = nil
+    home_deco._saved_page[name] = nil
+    home_deco._saved_search[name] = nil
     sfinv.set_player_inventory_formspec(player)
 end
 
@@ -648,6 +656,8 @@ minetest.register_on_leaveplayer(function(player)
         home_deco._deco_page[name] = nil
         home_deco._deco_search[name] = nil
         home_deco._deco_variant[name] = nil
+        home_deco._saved_page[name] = nil
+        home_deco._saved_search[name] = nil
         save_state()
     end
 end)
