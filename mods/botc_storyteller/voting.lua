@@ -208,7 +208,7 @@ minetest.register_entity("botc_storyteller:clock_hand", {
         pointable = false,
         static_save = false,
     },
-    sweep_speed = 360 / 10,
+    sweep_speed = -360 / 10,
     on_activate = function(self, staticdata)
         if staticdata and staticdata ~= "" then
             self.object:remove()
@@ -248,8 +248,8 @@ minetest.register_entity("botc_storyteller:clock_hand", {
             self.object:set_properties({ visual_size = { x = 8, y = 8, z = 8 } })
             local sweep_start = botc.ST.clock_sweep_start or 0
             local angle = (botc.ST.clock_angle or 0) + (self.sweep_speed * dtime)
-            if angle >= sweep_start + 360 then
-                angle = sweep_start + 360
+            if angle <= sweep_start - 360 then
+                angle = sweep_start - 360
                 local yes_count, no_count = botc.tally_votes(botc.ST.vote_blocks)
                 for ph, vb in pairs(botc.ST.vote_blocks) do
                     if vb.state == 3 then
@@ -288,7 +288,7 @@ minetest.register_entity("botc_storyteller:clock_hand", {
 
             self.object:set_rotation({ x = 0, y = math.rad(angle) + MESH_HAND_YAW_OFFSET, z = 0 })
 
-            local hand_travel = angle - sweep_start
+            local hand_travel = sweep_start - angle
             for phash, vb in pairs(botc.ST.vote_blocks) do
                 if not vb.locked then
                     local block_pos = minetest.string_to_pos(phash)
@@ -297,7 +297,7 @@ minetest.register_entity("botc_storyteller:clock_hand", {
                         local dz = block_pos.z - pos.z
                         local block_angle = math.deg(math.atan2(dz, dx))
                         if block_angle < 0 then block_angle = block_angle + 360 end
-                        local dist_to_block = (block_angle - sweep_start + 360) % 360
+                        local dist_to_block = (sweep_start - block_angle + 360) % 360
                         if dist_to_block <= hand_travel then
                             vb.locked = true
                             local meta = minetest.get_meta(block_pos)
@@ -328,7 +328,7 @@ minetest.register_entity("botc_storyteller:clock_little_hand", {
         pointable = false,
         static_save = false,
     },
-    sweep_speed = 360 / 12,
+    sweep_speed = -360 / 12,
     on_activate = function(self, staticdata)
         if staticdata and staticdata ~= "" then
             self.object:remove()

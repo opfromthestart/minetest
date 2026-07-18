@@ -524,12 +524,12 @@ end
 -- Sweep angle progression
 botc.ST.clock_state = "sweeping"
 botc.ST.clock_angle = 0
-local sweep_speed = 36  -- degrees/sec (360/10)
+local sweep_speed = -36  -- degrees/sec (-360/10), reversed direction
 local angle = botc.ST.clock_angle + sweep_speed * 1.0
-assert_true(angle > 0, "sweep advances")
-assert_true(angle < 360, "sweep not yet complete")
+assert_true(angle < 0, "sweep advances (negative)")
+assert_true(angle > -360, "sweep not yet complete")
 -- Sweep complete
-angle = 360
+angle = -360
 botc.ST.clock_state = "idle"
 botc.ST.clock_angle = nil
 assert_eq(botc.ST.clock_state, "idle", "sweep complete->idle")
