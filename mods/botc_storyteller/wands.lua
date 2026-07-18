@@ -1,8 +1,9 @@
 local function raycast_player(user)
     local user_name = user:get_player_name()
     local pos = user:get_pos()
-    pos.y = pos.y + 1.5 -- eye level
+    pos.y = pos.y + 1.5
     local dir = user:get_look_dir()
+    pos = vector.add(pos, vector.multiply(dir, 0.6))
     local endpos = vector.add(pos, vector.multiply(dir, 20))
     local ray = minetest.raycast(pos, endpos, true, false)
     for pt in ray do
@@ -222,12 +223,12 @@ local function get_target(user, pointed_thing)
         local ref = pointed_thing.ref
         if ref:is_player() then
             local name = ref:get_player_name()
-            result = name
+            if name ~= user_name then result = name end
         end
         if not result then
             local luaent = ref:get_luaentity()
             if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
-                result = luaent.fake_name
+                if luaent.fake_name ~= user_name then result = luaent.fake_name end
             end
         end
     elseif pointed_thing.type == "nothing" then
