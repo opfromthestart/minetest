@@ -347,6 +347,18 @@ minetest.register_chatcommand("botc_refill", {
         local args = param:trim():split(" ")
         local action = args[1] or ""
 
+        local function get_pointed_node(player)
+            local pos = player:get_pos()
+            pos.y = pos.y + 1.5
+            local dir = player:get_look_dir()
+            local endpos = vector.add(pos, vector.multiply(dir, 8))
+            local ray = minetest.raycast(pos, endpos, false, false)
+            for pt in ray do
+                if pt.type == "node" then return pt.under end
+            end
+            return nil
+        end
+
         if action == "list" then
             local count = 0
             for _ in pairs(botc.ST.refill_chests) do count = count + 1 end
@@ -367,19 +379,17 @@ minetest.register_chatcommand("botc_refill", {
         if not p then return false, "You must be in-game" end
 
         if action == "set" then
-            local pointed = minetest.get_pointed_thing_position(p, {type = "node", range = 8})
+            local pointed = get_pointed_node(p)
             if not pointed then
                 return false, "Point at a chest to mark it"
             end
             local node = minetest.get_node_or_nil(pointed)
             if not node then return false, "No node found" end
-            local ndef = minetest.registered_nodes[node.name]
-            if not ndef or not ndef.on_metadata_inventory_put then
-                return false, "That's not a chest or container"
-            end
             local meta = minetest.get_meta(pointed)
             local inv = meta:get_inventory()
-            if not inv then return false, "No inventory found" end
+            if not inv then
+                return false, "That's not a container"
+            end
             local phash = minetest.pos_to_string(pointed)
             local snapshot = {}
             local list = inv:get_list("main")
@@ -394,7 +404,7 @@ minetest.register_chatcommand("botc_refill", {
             for _ in pairs(snapshot) do item_count = item_count + 1 end
             return true, "Chest at " .. phash .. " marked for daily refill (" .. #list .. " slots, " .. item_count .. " items)"
         elseif action == "clear" then
-            local pointed = minetest.get_pointed_thing_position(p, {type = "node", range = 8})
+            local pointed = get_pointed_node(p)
             if not pointed then
                 return false, "Point at a marked chest to clear it"
             end
