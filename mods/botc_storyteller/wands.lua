@@ -486,6 +486,7 @@ minetest.register_tool("botc_storyteller:time_wand", {
             botc.ST.clock_nominee = nil
             botc.ST.execution_target = nil
             botc.ST.current_timeofday = 0.50
+            botc.refill_chests()
         elseif new_phase == "evening" then
             botc.ST.current_timeofday = 0.783
         elseif new_phase == "night" then

@@ -24,6 +24,7 @@ botc.ST = {
     timer_duration = 0,   -- total seconds set by ST
     timer_elapsed = 0,    -- elapsed seconds (frozen when clock is nominating/sweeping)
     timer_name = "",      -- display label
+    refill_chests = {},   -- { [pos_hash] = {pos = {x,y,z}, inv = {[slot] = "itemstring"} } }
 }
 
 botc.fake_players = {}  -- { name = true }
@@ -194,6 +195,35 @@ end
 
 function botc.get_team_color(team)
     return TEAM_COLORS[team] or "#ffffff"
+end
+
+function botc.refill_chests()
+    for phash, rc in pairs(botc.ST.refill_chests) do
+        local pos = minetest.string_to_pos(phash)
+        if not pos then
+            botc.ST.refill_chests[phash] = nil
+        else
+            local node = minetest.get_node_or_nil(pos)
+            if not node then
+                botc.ST.refill_chests[phash] = nil
+            else
+                local ndef = minetest.registered_nodes[node.name]
+                if ndef and ndef.on_metadata_inventory_put then
+                    local meta = minetest.get_meta(pos)
+                    local inv = meta:get_inventory()
+                    if inv then
+                        inv:set_list("main", {})
+                        for slot, item in pairs(rc.inv) do
+                            inv:set_stack("main", slot, item)
+                        end
+                    end
+                else
+                    botc.ST.refill_chests[phash] = nil
+                end
+            end
+        end
+    end
+    botc.save_state()
 end
 
 function botc.pos_hash(pos)

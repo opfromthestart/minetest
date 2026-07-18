@@ -217,6 +217,7 @@ minetest.register_chatcommand("botc_time", {
             botc.ST.clock_state = "idle"
             botc.ST.execution_target = nil
             botc.ST.current_timeofday = 0.50
+            botc.refill_chests()
         elseif param == "evening" then
             botc.ST.current_timeofday = 0.783
         elseif param == "night" then
@@ -335,5 +336,78 @@ minetest.register_chatcommand("botc_debug_texture", {
             minetest.chat_send_player(name, l)
         end
         return true
+    end,
+})
+
+minetest.register_chatcommand("botc_refill", {
+    params = "<set|clear|list>",
+    description = "Mark a chest to refill its contents each day, or clear the mark",
+    privs = {storyteller = true},
+    func = function(name, param)
+        local args = param:trim():split(" ")
+        local action = args[1] or ""
+
+        if action == "list" then
+            local count = 0
+            for _ in pairs(botc.ST.refill_chests) do count = count + 1 end
+            if count == 0 then
+                return true, "No refill chests marked"
+            end
+            local lines = {}
+            for phash, _ in pairs(botc.ST.refill_chests) do
+                local p = minetest.string_to_pos(phash)
+                if p then
+                    table.insert(lines, minetest.pos_to_string(p))
+                end
+            end
+            return true, count .. " refill chest(s):\n" .. table.concat(lines, "\n")
+        end
+
+        local p = minetest.get_player_by_name(name)
+        if not p then return false, "You must be in-game" end
+
+        if action == "set" then
+            local pointed = minetest.get_pointed_thing_position(p, {type = "node", range = 8})
+            if not pointed then
+                return false, "Point at a chest to mark it"
+            end
+            local node = minetest.get_node_or_nil(pointed)
+            if not node then return false, "No node found" end
+            local ndef = minetest.registered_nodes[node.name]
+            if not ndef or not ndef.on_metadata_inventory_put then
+                return false, "That's not a chest or container"
+            end
+            local meta = minetest.get_meta(pointed)
+            local inv = meta:get_inventory()
+            if not inv then return false, "No inventory found" end
+            local phash = minetest.pos_to_string(pointed)
+            local snapshot = {}
+            local list = inv:get_list("main")
+            for slot, item in ipairs(list) do
+                if not item:is_empty() then
+                    snapshot[slot] = item:to_string()
+                end
+            end
+            botc.ST.refill_chests[phash] = {pos = pointed, inv = snapshot}
+            botc.save_state()
+            local item_count = 0
+            for _ in pairs(snapshot) do item_count = item_count + 1 end
+            return true, "Chest at " .. phash .. " marked for daily refill (" .. #list .. " slots, " .. item_count .. " items)"
+        elseif action == "clear" then
+            local pointed = minetest.get_pointed_thing_position(p, {type = "node", range = 8})
+            if not pointed then
+                return false, "Point at a marked chest to clear it"
+            end
+            local phash = minetest.pos_to_string(pointed)
+            if botc.ST.refill_chests[phash] then
+                botc.ST.refill_chests[phash] = nil
+                botc.save_state()
+                return true, "Chest at " .. phash .. " no longer marked for refill"
+            else
+                return false, "That chest is not marked"
+            end
+        end
+
+        return false, "Usage: /botc_refill <set|clear|list>"
     end,
 })
