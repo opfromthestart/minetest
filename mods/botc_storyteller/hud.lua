@@ -119,7 +119,7 @@ local function update_indicators()
             if tp then
                 local pos = tp:get_pos()
                 if pos then
-                    local obj = minetest.add_entity({ x = pos.x, y = pos.y + 1.9, z = pos.z }, "botc_storyteller:indicator_nominated")
+                    local obj = minetest.add_entity({ x = pos.x, y = pos.y + 2.25, z = pos.z }, "botc_storyteller:indicator_nominated")
                     if obj then
                         local entity = obj:get_luaentity()
                         if entity then entity.target_player = name end
