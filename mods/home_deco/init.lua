@@ -10,6 +10,7 @@ home_deco.saved_player_inventory = {}
 home_deco._deco_page = {}
 home_deco._deco_search = {}
 home_deco._deco_variant = {}  -- base item name when viewing variants, nil otherwise
+home_deco._last_context = {}  -- last known zone context per player, persisted
 
 local function load_state()
     local owners = storage:get_string("home_owners")
@@ -22,11 +23,17 @@ local function load_state()
         local parsed = minetest.parse_json(invs)
         if parsed then home_deco.home_inventories = parsed end
     end
+    local ctxs = storage:get_string("last_contexts")
+    if ctxs ~= "" then
+        local parsed = minetest.parse_json(ctxs)
+        if parsed then home_deco._last_context = parsed end
+    end
 end
 
 local function save_state()
     storage:set_string("home_owners", minetest.write_json(home_deco.home_owners))
     storage:set_string("home_inventories", minetest.write_json(home_deco.home_inventories))
+    storage:set_string("last_contexts", minetest.write_json(home_deco._last_context))
 end
 
 local function serialize_list(list)
@@ -441,6 +448,10 @@ minetest.register_globalstep(function(dtime)
         local context = mumble_chatrooms.player_context[name]
         local in_home = home_deco.player_home_state[name]
 
+        if context then
+            home_deco._last_context[name] = context
+        end
+
         if in_home then
             local owner = home_deco.home_owners[context or ""]
             if owner ~= name then
@@ -454,15 +465,6 @@ minetest.register_globalstep(function(dtime)
             end
         end
     end
-
-    for name in pairs(home_deco.player_home_state) do
-        if not minetest.get_player_by_name(name) then
-            if home_deco.player_home_state[name] then
-                home_deco.player_home_state[name] = false
-            end
-            home_deco.saved_player_inventory[name] = nil
-        end
-    end
 end)
 
 minetest.register_on_leaveplayer(function(player)
@@ -471,6 +473,8 @@ minetest.register_on_leaveplayer(function(player)
         local inv = player:get_inventory()
         local main_list = inv:get_list("main")
         local craft_list = inv:get_list("craft")
+
+        -- Save the creative home inventory for next session
         local clean_main = {}
         for _, stack in ipairs(main_list) do
             if not stack:is_empty() then
@@ -484,12 +488,33 @@ minetest.register_on_leaveplayer(function(player)
             main = clean_main,
             craft = serialize_list(craft_list),
         }
+
+        -- Restore the player's real survival inventory NOW so that
+        -- Minetest saves the correct items to the player file on disconnect.
+        -- If we don't do this, the swapped creative inventory gets
+        -- permanently written to the player's save file.
+        local saved = home_deco.saved_player_inventory[name]
+        if saved then
+            inv:set_list("main", deserialize_list(saved.main))
+            inv:set_list("craft", deserialize_list(saved.craft))
+        end
+
+        home_deco.player_home_state[name] = false
+        home_deco.saved_player_inventory[name] = nil
+        home_deco._deco_page[name] = nil
+        home_deco._deco_search[name] = nil
+        home_deco._deco_variant[name] = nil
         save_state()
     end
 end)
 
 minetest.register_on_joinplayer(function(player)
     sfinv.set_player_inventory_formspec(player)
+    local name = player:get_player_name()
+    local ctx = home_deco._last_context[name]
+    if ctx and home_deco.home_owners[ctx] == name then
+        home_deco.enter_home(player)
+    end
 end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
