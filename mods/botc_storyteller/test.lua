@@ -87,7 +87,7 @@ _G.minetest = {
     end,
     get_connected_players = function()
         local r = {}
-        for name, d in pairs(mock_players) do table.insert(r, {get_player_name = function() return name end, get_pos = function() return d.pos or {x=0,y=0,z=0} end}) end
+        for name in pairs(mock_players) do table.insert(r, minetest.get_player_by_name(name)) end
         return r
     end,
     get_player_by_name = function(name)
@@ -111,6 +111,8 @@ _G.minetest = {
                 hud_remove = function(self, id) end,
                 get_inventory = function() return {add_item = function(inv, list, item) end} end,
                 get_look_dir = function() return {x=0,y=0,z=1} end,
+                set_velocity = function() end,
+                set_physics_override = function() end,
             }
         end
         return nil
@@ -162,7 +164,10 @@ _G.minetest = {
     registered_entities = {},
     register_on_mods_loaded = function(fn) fn() end,
     register_on_shutdown = function(fn) end,
-    register_globalstep = function(fn) end,
+    register_globalstep = function(fn)
+        mock_storage["_globalstep_handlers"] = mock_storage["_globalstep_handlers"] or {}
+        table.insert(mock_storage["_globalstep_handlers"], fn)
+    end,
     register_on_leaveplayer = function(fn) end,
     register_on_joinplayer = function(fn)
         mock_storage["_joinplayer_handlers"] = mock_storage["_joinplayer_handlers"] or {}
@@ -1294,6 +1299,20 @@ assert_true(#bob_textures == 0 or not bob_textures[1]:find("opacity", 1, true), 
 
 _G.player_api = nil
 _G.skins = nil
+
+-- Regression: ghost.lua's globalstep must NOT un-hide a player who is
+-- currently hidden for a pyre execution (visual_size = 0). Previously
+-- the globalstep unconditionally reset visual_size to {1,1} every
+-- second, undoing pyre_hide_player's hide within ~1 second.
+botc.ST.roles["Bob"].alive = false
+mock_players["Bob"].props = nil
+botc.pyre_hide_player("Bob")
+bob_props = mock_players["Bob"].props or {}
+assert_eq(bob_props.visual_size.x, 0, "pyre_hide_player hides the body (visual_size 0)")
+for _, fn in ipairs(mock_storage["_globalstep_handlers"] or {}) do fn(1) end
+bob_props = mock_players["Bob"].props or {}
+assert_eq(bob_props.visual_size.x, 0, "ghost.lua globalstep does not un-hide a pyre-hidden player")
+botc.pyre_show_player("Bob")
 
 -- ============================================================
 section("34. Fake Player Skins (skinsdb integration)")
