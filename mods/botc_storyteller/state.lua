@@ -20,6 +20,10 @@ botc.ST = {
     current_timeofday = 0.0,
     player_notes = {},    -- { [author] = { [target] = "text" } }
     bag = {},             -- { [role_id] = count, ... } — custom role bag
+    timer_active = false,
+    timer_duration = 0,   -- total seconds set by ST
+    timer_elapsed = 0,    -- elapsed seconds (frozen when clock is nominating/sweeping)
+    timer_name = "",      -- display label
 }
 
 botc.fake_players = {}  -- { name = true }

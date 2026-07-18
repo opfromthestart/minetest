@@ -176,6 +176,27 @@ function botc.show_bag_formspec(pname)
     )
 end
 
+function botc.show_timer_formspec(pname)
+    local remaining = math.max(0, botc.ST.timer_duration - botc.ST.timer_elapsed)
+    local status
+    if botc.ST.timer_active then
+        status = "Running: " .. string.format("%d:%02d", math.floor(remaining / 60), math.floor(remaining % 60))
+    else
+        status = "Inactive"
+    end
+    minetest.show_formspec(pname, "botc_storyteller:timer",
+        "size[8,5]" ..
+        "label[0.5,0.5;" .. minetest.formspec_escape("Status: " .. status) .. "]" ..
+        "label[0.5,1.3;Duration (seconds):]" ..
+        "field[5,1;2,1;timer_dur;" .. minetest.formspec_escape(tostring(botc.ST.timer_duration)) .. "]" ..
+        "label[0.5,2.3;Timer name:]" ..
+        "field[5,2;2,1;timer_name;" .. minetest.formspec_escape(botc.ST.timer_name) .. "]" ..
+        "button[0.5,3.5;2.5,1;timer_start;Start]" ..
+        "button[3.5,3.5;2.5,1;timer_stop;Stop]" ..
+        "button[6.5,3.5;1.5,1;timer_close;Close]"
+    )
+end
+
 local WAND_TEXTURES = {
     script_wand = "Wandselectscript.png",
     nomination_wand = "Wandndemblemnominated.png",
@@ -444,6 +465,12 @@ minetest.register_tool("botc_storyteller:time_wand", {
         end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ffaa00", "Time is now: " .. new_phase:upper()))
+        return itemstack
+    end,
+    on_place = function(itemstack, user, pointed_thing)
+        local name = user:get_player_name()
+        if not minetest.check_player_privs(name, {storyteller = true}) then return itemstack end
+        botc.show_timer_formspec(name)
         return itemstack
     end,
 })
@@ -872,6 +899,38 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         end
         return true
     end
+
+    -- Timer formspec
+    if formname == "botc_storyteller:timer" then
+        if fields.timer_close or fields.quit then
+            return true
+        end
+        if fields.timer_name then
+            botc.ST.timer_name = fields.timer_name
+            botc.save_state()
+        end
+        if fields.timer_dur then
+            local d = tonumber(fields.timer_dur)
+            if d and d > 0 then
+                botc.ST.timer_duration = d
+                botc.save_state()
+            end
+        end
+        if fields.timer_start then
+            botc.ST.timer_elapsed = 0
+            botc.ST.timer_active = true
+            botc.save_state()
+            minetest.chat_send_all(minetest.colorize("#ffaa00", "Timer started: " .. (botc.ST.timer_name ~= "" and botc.ST.timer_name or "Unnamed") .. " (" .. botc.ST.timer_duration .. "s)"))
+        end
+        if fields.timer_stop then
+            botc.ST.timer_active = false
+            botc.ST.timer_elapsed = 0
+            botc.save_state()
+            minetest.chat_send_all(minetest.colorize("#ffaa00", "Timer stopped."))
+        end
+        botc.show_timer_formspec(name)
+        return true
+    end
 end)
 
 -- Make all wands work with right-click too
@@ -881,6 +940,5 @@ minetest.override_item("botc_storyteller:execution_wand", { on_place = minetest.
 minetest.override_item("botc_storyteller:kill_wand", { on_place = minetest.registered_tools["botc_storyteller:kill_wand"].on_use })
 minetest.override_item("botc_storyteller:revive_wand", { on_place = minetest.registered_tools["botc_storyteller:revive_wand"].on_use })
 minetest.override_item("botc_storyteller:marker_wand", { on_place = minetest.registered_tools["botc_storyteller:marker_wand"].on_use })
-minetest.override_item("botc_storyteller:time_wand", { on_place = minetest.registered_tools["botc_storyteller:time_wand"].on_use })
 minetest.override_item("botc_storyteller:notebook", { on_place = minetest.registered_tools["botc_storyteller:notebook"].on_use })
 minetest.override_item("botc_storyteller:notebook", { on_place = minetest.registered_tools["botc_storyteller:notebook"].on_use })
