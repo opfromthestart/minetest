@@ -111,6 +111,56 @@ minetest.register_chatcommand("home_deco", {
     end,
 })
 
+minetest.register_chatcommand("home_deco_verify", {
+    params = "",
+    description = "Verify every node appears in exactly one menu (main or variant)",
+    privs = {server = true},
+    func = function(name, param)
+        local seen_main = {}
+        local seen_variant = {}
+        local total = 0
+        local main_count = 0
+
+        for node_name, def in pairs(minetest.registered_nodes) do
+            local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
+            if not hidden then
+                total = total + 1
+                local shape = is_shape_variant(node_name)
+                local material = extract_material(node_name)
+
+                if shape then
+                    if not seen_variant[material] then seen_variant[material] = {} end
+                    seen_variant[material][node_name] = true
+                else
+                    seen_main[node_name] = true
+                    main_count = main_count + 1
+                end
+            end
+        end
+
+        local group_count = 0
+        local variant_total = 0
+        for _, items in pairs(seen_variant) do
+            group_count = group_count + 1
+            for _ in pairs(items) do
+                variant_total = variant_total + 1
+            end
+        end
+
+        local report = {}
+        table.insert(report, "Total nodes: " .. total)
+        table.insert(report, "Main view: " .. main_count)
+        table.insert(report, "Variant views: " .. group_count .. " materials, " .. variant_total .. " items")
+        table.insert(report, "Sum: " .. (main_count + variant_total))
+        if main_count + variant_total ~= total then
+            table.insert(report, "WARNING: " .. total .. " != " .. (main_count + variant_total))
+        else
+            table.insert(report, "OK: every node in exactly one place")
+        end
+        return true, table.concat(report, "\n")
+    end,
+})
+
 minetest.register_on_mods_loaded(function()
     load_state()
 end)
