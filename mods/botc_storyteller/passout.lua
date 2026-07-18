@@ -1,4 +1,4 @@
-local modpath = minetest.get_modpath("botc_storyteller_storyteller")
+local modpath = minetest.get_modpath("botc_storyteller")
 
 -- Built-in role → team mapping from allroles.txt
 local DEFAULT_TEAMS = {
@@ -72,6 +72,27 @@ function botc.resolve_name(role_entry)
     return name:gsub("_", " "):gsub("(%a)([%w_']*)", function(first, rest) return first:upper() .. rest end)
 end
 
+local TEAM_COUNTS_TABLE = {
+    [5]  = {townsfolk=3, outsider=0, minion=1, demon=1},
+    [6]  = {townsfolk=3, outsider=1, minion=1, demon=1},
+    [7]  = {townsfolk=5, outsider=0, minion=1, demon=1},
+    [8]  = {townsfolk=5, outsider=1, minion=1, demon=1},
+    [9]  = {townsfolk=5, outsider=2, minion=1, demon=1},
+    [10] = {townsfolk=7, outsider=0, minion=2, demon=1},
+    [11] = {townsfolk=7, outsider=1, minion=2, demon=1},
+    [12] = {townsfolk=7, outsider=2, minion=2, demon=1},
+    [13] = {townsfolk=9, outsider=0, minion=3, demon=1},
+    [14] = {townsfolk=9, outsider=1, minion=3, demon=1},
+    [15] = {townsfolk=9, outsider=2, minion=3, demon=1},
+}
+
+function botc.get_team_counts(player_count)
+    if type(player_count) ~= "number" or player_count < 5 or player_count > 15 then
+        return nil
+    end
+    return TEAM_COUNTS_TABLE[player_count]
+end
+
 function botc.load_script(filename)
     local f = io.open(modpath .. "/" .. filename, "r")
     if not f then return false, "File not found: " .. filename end
@@ -128,29 +149,21 @@ function botc.passout(player_list)
         end
     end
 
-    local players = {}
+    local players
     if player_list and #player_list > 0 then
         players = player_list
     else
-        for _, p in ipairs(minetest.get_connected_players()) do
-            table.insert(players, p:get_player_name())
-        end
+        players = botc.all_players()
     end
 
     local count = #players
     if count < 5 then return false, "Need at least 5 players (got " .. count .. ")" end
 
-    -- Determine team counts (standard BotC: TB)
-    -- 5-6: 1D 1Min 1Out restTw, 7-9: 1D 1Min 2Out restTw, 10-12: 1D 2Min 2Out restTw, 13-15: 1D 3Min 0Out restTw
-    local demon_count = 1
-    local minion_count, outsider_count
-    if count <= 6 then minion_count = 1; outsider_count = 1
-    elseif count <= 9 then minion_count = 1; outsider_count = 2
-    elseif count <= 12 then minion_count = 2; outsider_count = 2
-    else minion_count = 3; outsider_count = 0
-    end
-
-    local townsfolk_count = count - demon_count - minion_count - outsider_count
+    local team_counts = botc.get_team_counts(count)
+    local demon_count = team_counts.demon
+    local minion_count = team_counts.minion
+    local outsider_count = team_counts.outsider
+    local townsfolk_count = team_counts.townsfolk
     if townsfolk_count < 1 then return false, "Not enough players for the required roles" end
 
     -- Verify script has enough roles
@@ -196,7 +209,8 @@ function botc.passout(player_list)
 
     botc.ST.current_day = 1
     botc.ST.nominations = {}
-    botc.ST.phase = "day"
+    botc.ST.phase = "night" -- games start at night (botc_guide 2.3)
+    botc.ST.current_timeofday = 0.0
     botc.ST.vote_blocks = {}
     botc.save_state()
 
