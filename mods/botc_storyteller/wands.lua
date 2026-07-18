@@ -197,9 +197,9 @@ function botc.show_timer_formspec(pname)
         "size[8,5]" ..
         "label[0.5,0.5;" .. minetest.formspec_escape("Status: " .. status) .. "]" ..
         "label[0.5,1.3;Duration (seconds):]" ..
-        "field[5,1;2,1;timer_dur;" .. minetest.formspec_escape(tostring(botc.ST.timer_duration)) .. "]" ..
+        "field[5,1;2,1;timer_dur;;" .. minetest.formspec_escape(tostring(botc.ST.timer_duration)) .. "]" ..
         "label[0.5,2.3;Timer name:]" ..
-        "field[5,2;2,1;timer_name;" .. minetest.formspec_escape(botc.ST.timer_name) .. "]" ..
+        "field[5,2;2,1;timer_name;;" .. minetest.formspec_escape(botc.ST.timer_name) .. "]" ..
         "button[0.5,3.5;2.5,1;timer_start;Start]" ..
         "button[3.5,3.5;2.5,1;timer_stop;Stop]" ..
         "button[6.5,3.5;1.5,1;timer_close;Close]"

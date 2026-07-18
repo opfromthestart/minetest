@@ -95,7 +95,7 @@ end
 -- Dead players are rendered partially transparent (~40% opacity) so
 -- they're visually distinct. Applied via a texture modifier that
 -- layers on top of whatever skin/texture is already in use.
-botc.DEAD_TEXTURE_MOD = "^[opacity:102" -- ~0.4 alpha (102/255)
+botc.DEAD_TEXTURE_MOD = "^[opacity:178" -- ~0.7 alpha, ghostly but visible
 botc.ALIVE_TEXTURE_MOD = ""
 
 function botc.update_alive_texture(name)
