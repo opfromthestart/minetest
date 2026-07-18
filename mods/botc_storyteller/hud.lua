@@ -196,9 +196,9 @@ local function update_timer_hud(name, player)
         local id = player:hud_add({
             type = "text",
             text = text,
-            position = {x = 0.98, y = 0.9},
-            alignment = {x = 1, y = 0},
-            size = {x = 10, y = 1},
+            position = {x = 0.85, y = 0.92},
+            alignment = {x = 0, y = 0},
+            scale = {x = 1, y = 1},
             number = 0xFFAA00,
         })
         timer_hud_ids[name] = id

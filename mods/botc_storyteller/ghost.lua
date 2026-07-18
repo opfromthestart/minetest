@@ -4,8 +4,12 @@ local function apply_dead_transparency(player)
     local props = player:get_properties()
     local textures = props and props.textures or {}
     if #textures == 0 then return end
-    if textures[1]:find(botc.DEAD_TEXTURE_MOD, 1, true) then return end
-    textures[1] = textures[1] .. botc.DEAD_TEXTURE_MOD
+    if textures[1]:find("opacity", 1, true) then return end
+    for i = 1, #textures do
+        if textures[i] ~= "" then
+            textures[i] = textures[i] .. botc.DEAD_TEXTURE_MOD
+        end
+    end
     player:set_properties({textures = textures})
 end
 
@@ -13,8 +17,10 @@ local function remove_dead_transparency(player)
     local props = player:get_properties()
     local textures = props and props.textures or {}
     if #textures == 0 then return end
-    if not textures[1]:find(botc.DEAD_TEXTURE_MOD, 1, true) then return end
-    textures[1] = textures[1]:gsub(botc.DEAD_TEXTURE_MOD, "")
+    if not textures[1]:find("opacity", 1, true) then return end
+    for i = 1, #textures do
+        textures[i] = textures[i]:gsub("%^%[opacity:[0-9]+", "")
+    end
     player:set_properties({textures = textures})
 end
 
