@@ -458,7 +458,9 @@ sfinv.register_page("home_deco:deco", {
     title = "Home Decorations",
     is_in_nav = function(self, player, context)
         local name = player:get_player_name()
-        return home_deco.player_home_state[name] and true or false
+        if home_deco.player_home_state[name] then return true end
+        if minetest.check_player_privs(player, {creative = true}) then return true end
+        return false
     end,
     get = function(self, player, context)
         local content = build_deco_formspec(player, context)
