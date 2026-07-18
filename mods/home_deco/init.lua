@@ -8,6 +8,7 @@ home_deco.home_inventories = {}
 home_deco.player_home_state = {}
 home_deco.saved_player_inventory = {}
 home_deco._deco_page = {}
+home_deco._deco_search = {}
 
 local function load_state()
     local owners = storage:get_string("home_owners")
@@ -172,6 +173,20 @@ end
 local function build_deco_formspec(player, context)
     local name = player:get_player_name()
     local nodes = get_node_list()
+    local search = home_deco._deco_search[name] or ""
+
+    -- Filter by search text
+    if search ~= "" then
+        local lower = search:lower()
+        local filtered = {}
+        for _, n in ipairs(nodes) do
+            if n.name:lower():find(lower, 1, true) or n.desc:lower():find(lower, 1, true) then
+                table.insert(filtered, n)
+            end
+        end
+        nodes = filtered
+    end
+
     local page = home_deco._deco_page[name] or 0
     local total_pages = math.floor(#nodes / NODES_PER_PAGE)
     local start_idx = page * NODES_PER_PAGE + 1
@@ -179,11 +194,26 @@ local function build_deco_formspec(player, context)
     local row = 0
     local col = 0
     local fs = ""
+    local y_offset = 0.8
+
+    -- Search bar
+    fs = fs .. "field[0,0.1;6,0.7;hdd_search;;" .. minetest.formspec_escape(search) .. "]"
+    fs = fs .. "button[5.5,0.1;1,0.7;hdd_search_btn;Search]"
+    if search ~= "" then
+        fs = fs .. "button[6.5,0.1;1,0.7;hdd_search_clr;Clear]"
+        fs = fs .. "label[0,0.8;" .. minetest.formspec_escape(#nodes .. " matches") .. "]"
+        y_offset = 1.3
+    end
+
+    if #nodes == 0 then
+        fs = fs .. "label[0," .. y_offset .. ";No items match your search.]"
+        return fs
+    end
 
     for i = start_idx, end_idx do
         local n = nodes[i]
         local btn_name = "hdd_item_" .. n.name:gsub(":", "_")
-        fs = fs .. "item_image_button[" .. col .. "," .. row .. ";1,1;" .. n.name .. ";" .. btn_name .. ";]"
+        fs = fs .. "item_image_button[" .. col .. "," .. (y_offset + row) .. ";1,1;" .. n.name .. ";" .. btn_name .. ";]"
         fs = fs .. "tooltip[" .. btn_name .. ";" .. minetest.formspec_escape(n.desc) .. "]"
         col = col + 1
         if col >= 8 then
@@ -193,12 +223,12 @@ local function build_deco_formspec(player, context)
     end
 
     if page > 0 then
-        fs = fs .. "button[0,3.2;2,0.8;hdd_page_prev;<< Prev]"
+        fs = fs .. "button[0," .. (y_offset + 3.2) .. ";2,0.8;hdd_page_prev;<< Prev]"
     end
     if page < total_pages then
-        fs = fs .. "button[6,3.2;2,0.8;hdd_page_next;Next >>]"
+        fs = fs .. "button[6," .. (y_offset + 3.2) .. ";2,0.8;hdd_page_next;Next >>]"
     end
-    fs = fs .. "label[2.5,3.4;" .. (page + 1) .. " / " .. (total_pages + 1) .. "]"
+    fs = fs .. "label[2.5," .. (y_offset + 3.4) .. ";" .. (page + 1) .. " / " .. (total_pages + 1) .. "]"
 
     return fs
 end
@@ -215,6 +245,18 @@ sfinv.register_page("home_deco:deco", {
     end,
     on_player_receive_fields = function(self, player, context, fields)
         local name = player:get_player_name()
+        if fields.hdd_search_clr then
+            home_deco._deco_search[name] = ""
+            home_deco._deco_page[name] = 0
+            sfinv.set_player_inventory_formspec(player, context)
+            return true
+        end
+        if fields.hdd_search_btn or fields.key_enter_field == "hdd_search" then
+            home_deco._deco_search[name] = fields.hdd_search or ""
+            home_deco._deco_page[name] = 0
+            sfinv.set_player_inventory_formspec(player, context)
+            return true
+        end
         if fields.hdd_page_next then
             home_deco._deco_page[name] = (home_deco._deco_page[name] or 0) + 1
             sfinv.set_player_inventory_formspec(player, context)
