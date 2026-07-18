@@ -259,4 +259,15 @@ minetest.register_on_leaveplayer(function(player)
     local name = player:get_player_name()
     player_huds[name] = nil
     timer_hud_ids[name] = nil
+    -- Remove nomination / execution indicators targeting the leaving player
+    for _, obj in ipairs(minetest.get_objects_inside_radius({x=0,y=0,z=0}, 65536) or {}) do
+        if obj and not obj:is_player() then
+            local ent = obj:get_luaentity()
+            if ent and (ent.name == "botc_storyteller:indicator_nominated" or ent.name == "botc_storyteller:indicator_execution") then
+                if ent.target_player == name then
+                    obj:remove()
+                end
+            end
+        end
+    end
 end)
