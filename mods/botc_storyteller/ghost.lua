@@ -15,6 +15,7 @@ minetest.register_globalstep(function(dtime)
             player:set_nametag_attributes({
                 color = { r = 128, g = 128, b = 128, a = 128 },
             })
+            player:set_texture_mod(botc.DEAD_TEXTURE_MOD)
         else
             player:set_properties({
                 visual_size = { x = 1, y = 1 },
@@ -22,6 +23,7 @@ minetest.register_globalstep(function(dtime)
             player:set_nametag_attributes({
                 color = { r = 255, g = 255, b = 255, a = 255 },
             })
+            player:set_texture_mod(botc.ALIVE_TEXTURE_MOD)
         end
     end
 end)
