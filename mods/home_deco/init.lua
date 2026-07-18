@@ -47,8 +47,10 @@ end
 
 local function deserialize_list(strings)
     local out = {}
-    for _, s in ipairs(strings) do
-        table.insert(out, s)
+    if strings then
+        for _, s in ipairs(strings) do
+            table.insert(out, s)
+        end
     end
     return out
 end
