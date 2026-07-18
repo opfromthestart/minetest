@@ -114,10 +114,18 @@ function botc.update_alive_texture(name)
     end
     local p = botc.get_player(name)
     if p and p.is_player and p:is_player() then
-        if data.alive then
-            p:set_properties({visual_size = {x = 1, y = 1}})
-        else
-            p:set_properties({visual_size = {x = 0.7, y = 0.7}})
+        -- Enable alpha blending so the opacity modifier actually renders
+        -- as semi-transparent instead of being alpha-tested to invisible.
+        p:set_properties({use_texture_alpha = true})
+        if minetest.global_exists("skins") and skins.update_player_skin then
+            -- Re-send the skin through player_api.set_textures, which
+            -- ghost.lua wraps to add/remove the dead opacity modifier.
+            skins.update_player_skin(p)
+        elseif minetest.global_exists("player_api") and player_api.set_textures then
+            -- No skinsdb: re-apply the current textures through the
+            -- wrapped set_textures so the modifier is added/removed.
+            local props = p:get_properties()
+            player_api.set_textures(p, props.textures or {})
         end
     end
 end
