@@ -219,7 +219,7 @@ local function get_node_list(base_name)
             -- Variant view: show all matching nodes, including those
             -- hidden from regular creative (many shape mods set
             -- not_in_creative_inventory=1 on their variants).
-            if extract_material(name) == base_name then
+            if extract_material(name):find("^" .. base_name) then
                 table.insert(nodes, {name = name, desc = def.description or name})
             end
         else
