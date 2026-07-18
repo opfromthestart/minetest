@@ -671,9 +671,9 @@ minetest.register_entity("botc_storyteller:fire_pyre_effect", {
         local extra = (math.random() < (intensity * 60 - base)) and 1 or 0
         local anum = base + extra
         for _ = 1, anum do
-            -- Circle of fire at the base (not a full cylinder)
+            -- Ring of fire at the base (circle, not a filled disc)
             local angle = math.random() * 2 * math.pi
-            local radius = math.random() * 1.2
+            local radius = 1.0
             local ox = math.cos(angle) * radius
             local oy = math.random() * 0.3
             local oz = math.sin(angle) * radius
