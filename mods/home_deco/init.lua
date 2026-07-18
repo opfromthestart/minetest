@@ -205,15 +205,15 @@ end
 
 sfinv.register_page("home_deco:deco", {
     title = "Home Decorations",
-    is_in_nav = function(player, context)
+    is_in_nav = function(self, player, context)
         local name = player:get_player_name()
         return home_deco.player_home_state[name] and true or false
     end,
-    get = function(player, context)
+    get = function(self, player, context)
         local content = build_deco_formspec(player, context)
         return sfinv.make_formspec(player, context, content, false, nil)
     end,
-    on_player_receive_fields = function(player, context, fields)
+    on_player_receive_fields = function(self, player, context, fields)
         local name = player:get_player_name()
         if fields.hdd_page_next then
             home_deco._deco_page[name] = (home_deco._deco_page[name] or 0) + 1
