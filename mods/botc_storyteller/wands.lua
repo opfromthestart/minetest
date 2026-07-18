@@ -367,6 +367,8 @@ minetest.register_tool("botc_storyteller:execution_wand", {
         end
         local ez = botc.ST.execution_zone
         local epos = {x = ez.x, y = ez.y, z = ez.z}
+        botc.ST.execution_target = nil
+        botc.save_state()
         if botc.is_execution_zone_pyre() then
             epos = {x = ez.x + -0.4, y = ez.y, z = ez.z}
             botc.pyre_spawn_fire(ez)
@@ -649,6 +651,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                         if player then
                             local ez = botc.ST.execution_zone
                             local epos = {x = ez.x, y = ez.y, z = ez.z}
+                            botc.ST.execution_target = nil
+                            botc.save_state()
                             if botc.is_execution_zone_pyre() then
                                 epos = {x = ez.x + -0.4, y = ez.y, z = ez.z}
                                 botc.pyre_spawn_fire(ez)
