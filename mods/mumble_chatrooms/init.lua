@@ -380,3 +380,5 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 end)
 
+
+mumble_chatrooms.player_context = player_context
