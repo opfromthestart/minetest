@@ -11,6 +11,7 @@ home_deco._deco_page = {}
 home_deco._deco_search = {}
 home_deco._deco_variant = {}  -- base item name when viewing variants, nil otherwise
 home_deco._last_context = {}  -- last known zone context per player, persisted
+home_deco._item_map = {}      -- {[playername] = {[btn_idx] = item_name}} for button decode
 
 local function load_state()
     local owners = storage:get_string("home_owners")
@@ -287,9 +288,13 @@ local function build_deco_formspec(player, context)
         return fs
     end
 
+    local item_map = {}
+    local btn_idx = 0
     for i = start_idx, end_idx do
         local n = nodes[i]
-        local btn_name = "hdd_item_" .. n.name:gsub(":", "_")
+        local btn_name = "hdd_item_" .. btn_idx
+        item_map[tostring(btn_idx)] = n.name
+        btn_idx = btn_idx + 1
         fs = fs .. "item_image_button[" .. col .. "," .. (y_offset + row) .. ";1,1;" .. n.name .. ";" .. btn_name .. ";]"
         fs = fs .. "tooltip[" .. btn_name .. ";" .. minetest.formspec_escape(n.desc) .. "]"
         col = col + 1
@@ -298,6 +303,7 @@ local function build_deco_formspec(player, context)
             row = row + 1
         end
     end
+    home_deco._item_map[name] = item_map
 
     if page > 0 then
         fs = fs .. "button[0," .. (y_offset + 3.2) .. ";2,0.8;hdd_page_prev;<< Prev]"
@@ -354,9 +360,14 @@ sfinv.register_page("home_deco:deco", {
             return true
         end
         for fname, _ in pairs(fields) do
-            local itemname = fname:match("^hdd_item_(.+)$")
-            if itemname then
-                local clean_name = itemname:gsub("_", ":")
+            local btn_suffix = fname:match("^hdd_item_(.+)$")
+            if btn_suffix then
+                local item_map = home_deco._item_map[name] or {}
+                local clean_name = item_map[btn_suffix]
+                if not clean_name then
+                    sfinv.set_player_inventory_formspec(player, context)
+                    return true
+                end
                 local variant = home_deco._deco_variant[name]
                 if variant then
                     -- In variant view: add the item to inventory
