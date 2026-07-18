@@ -76,11 +76,11 @@ function botc.show_notebook_formspec(viewer, target)
     elseif type(entry) == "string" then
         priv_text = entry
     end
-    local color_idx = 0
+    local color_idx = 1
     if current_color ~= "" then
         for i, name in ipairs(NOTE_COLORS) do
             if NOTE_COLOR_HEX[name] == current_color then
-                color_idx = i - 1
+                color_idx = i
                 break
             end
         end
