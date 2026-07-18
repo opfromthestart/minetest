@@ -241,7 +241,7 @@ sfinv.register_page("home_deco:deco", {
     end,
     get = function(self, player, context)
         local content = build_deco_formspec(player, context)
-        return sfinv.make_formspec(player, context, content, false, nil)
+        return sfinv.make_formspec(player, context, content, true, nil)
     end,
     on_player_receive_fields = function(self, player, context, fields)
         local name = player:get_player_name()
