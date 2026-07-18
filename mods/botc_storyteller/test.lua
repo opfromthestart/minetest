@@ -986,7 +986,7 @@ assert_true(#raycast_calls > 0, "raycast was called for nothing-type pointed_thi
 assert_true(raycast_calls[1].objects == true, "raycast uses objects=true for player detection")
 minetest.raycast = _orig_raycast
 
--- Formspec self-target guard: prevents killing yourself from the list
+-- Self-select from the player list should work (no raytracing involved)
 reset_state()
 mock_players["StorytellerX"] = {is_st = true}
 mock_players["Bob"] = {is_st = false}
@@ -997,7 +997,7 @@ assert_true(fields_handler ~= nil, "fields handler registered")
 local st_obj3 = minetest.get_player_by_name("StorytellerX")
 -- all_players sorted: ["Bob", "StorytellerX"], DCL:2 = StorytellerX (self)
 fields_handler(st_obj3, "botc_storyteller:wand_kill_list", {players = "DCL:2"})
-assert_true(botc.ST.roles["StorytellerX"].alive, "kill formspec self-select does NOT kill user")
+assert_false(botc.ST.roles["StorytellerX"].alive, "kill formspec self-select works from list")
 
 -- ============================================================
 section("27. Script Wand Textlist Selection + Assign")

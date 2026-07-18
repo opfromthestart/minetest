@@ -7,19 +7,16 @@ local function raycast_player(user)
     local ray = minetest.raycast(pos, endpos, true, false)
     for pt in ray do
         if pt.type == "node" then
-            -- A solid node blocks line of sight; don't select players
-            -- standing behind walls or beyond obstructions.
             return nil
         elseif pt.type == "object" then
             if pt.ref:is_player() then
                 local name = pt.ref:get_player_name()
-                if name ~= user_name then
-                    return name
+                if name ~= user_name then return name end
+            else
+                local luaent = pt.ref:get_luaentity()
+                if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
+                    if luaent.fake_name ~= user_name then return luaent.fake_name end
                 end
-            end
-            local luaent = pt.ref:get_luaentity()
-            if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
-                if luaent.fake_name ~= user_name then return luaent.fake_name end
             end
         end
     end
@@ -220,20 +217,24 @@ local WAND_TEXTURES = {
 
 local function get_target(user, pointed_thing)
     local user_name = user:get_player_name()
+    local result
     if pointed_thing.type == "object" then
         local ref = pointed_thing.ref
         if ref:is_player() then
             local name = ref:get_player_name()
-            if name ~= user_name then return name end
+            result = name
         end
-        local luaent = ref:get_luaentity()
-        if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
-            if luaent.fake_name ~= user_name then return luaent.fake_name end
+        if not result then
+            local luaent = ref:get_luaentity()
+            if luaent and luaent.name == "botc_storyteller:fake_player" and luaent.fake_name ~= "" then
+                result = luaent.fake_name
+            end
         end
     elseif pointed_thing.type == "nothing" then
-        return raycast_player(user)
+        result = raycast_player(user)
     end
-    return nil
+    if result == user_name then return nil end
+    return result
 end
 
 local nomination_step1 = {} -- { [username] = nominator }
@@ -618,10 +619,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                 table.sort(names)
                 if selected.index and names[selected.index] then
                     local target = names[selected.index]
-                    if target == name then
-                        minetest.chat_send_player(name, "You cannot target yourself")
-                        return true
-                    end
                     if not botc.ST.execution_zone then
                         minetest.chat_send_player(name, "No execution zone set. Use /botc_exezone set")
                     else
@@ -675,10 +672,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                 table.sort(names)
                 if selected.index and names[selected.index] then
                     local target = names[selected.index]
-                    if target == name then
-                        minetest.chat_send_player(name, "You cannot target yourself")
-                        return true
-                    end
                     local data = botc.ST.roles[target]
                     if not data then
                         minetest.chat_send_player(name, target .. " has no role assigned")
@@ -707,10 +700,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                                 table.sort(names)
                 if selected.index and names[selected.index] then
                     local target = names[selected.index]
-                    if target == name then
-                        minetest.chat_send_player(name, "You cannot target yourself")
-                        return true
-                    end
                     local data = botc.ST.roles[target]
                     if not data then
                         minetest.chat_send_player(name, target .. " has no role assigned")
