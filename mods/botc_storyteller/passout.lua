@@ -55,6 +55,23 @@ local DEFAULT_TEAMS = {
     zombuul = "demon",
 }
 
+-- Roles whose true identity is hidden from the player who draws them.
+-- Face-down roles must NOT be put in the bag; the storyteller adds a
+-- placeholder token (what the player *thinks* they are) instead.
+local DEFAULT_FACE_DOWN = {
+    drunk = true,
+    lunatic = true,
+    marionette = true,
+}
+
+function botc.is_face_down(role_entry)
+    local id = type(role_entry) == "table" and role_entry.id or role_entry
+    local name = type(role_entry) == "table" and (role_entry.name or role_entry.id) or role_entry
+    return DEFAULT_FACE_DOWN[name:lower():gsub("[ -]", "_")]
+        or DEFAULT_FACE_DOWN[id:lower():gsub("[ -]", "_")]
+        or false
+end
+
 function botc.resolve_team(role_entry)
     if type(role_entry) == "table" and role_entry.team then
         return role_entry.team

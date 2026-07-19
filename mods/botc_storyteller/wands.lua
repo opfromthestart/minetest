@@ -145,7 +145,11 @@ function botc.show_bag_formspec(pname)
         if #roles > 0 then
             table.insert(left_entries, "#" .. team_labels[team])
             for _, r in ipairs(roles) do
-                table.insert(left_entries, r.name)
+                local label = r.name
+                if botc.is_face_down(r) then
+                    label = label .. " [FD]"
+                end
+                table.insert(left_entries, label)
             end
         end
     end
@@ -882,6 +886,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                 end
                 if ev.index <= #entries then
                     local role = entries[ev.index]
+                    if botc.is_face_down(role) then
+                        minetest.chat_send_player(name, "Cannot add face-down role \"" .. botc.resolve_name(role) .. "\" to the bag. Add the placeholder role (what the player thinks they are) instead.")
+                        return true
+                    end
                     botc.ST.bag[role.id] = (botc.ST.bag[role.id] or 0) + 1
                     botc.save_state()
                     refresh = true

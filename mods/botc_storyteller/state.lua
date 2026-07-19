@@ -20,6 +20,7 @@ botc.ST = {
     current_timeofday = 0.0,
     player_notes = {},    -- { [author] = { [target] = "text" } }
     bag = {},             -- { [role_id] = count, ... } — custom role bag
+    face_down = {},       -- { [role_id] = true } — roles hidden from players
     timer_active = false,
     timer_duration = 0,   -- total seconds set by ST
     timer_elapsed = 0,    -- elapsed seconds (frozen when clock is nominating/sweeping)
@@ -207,15 +208,13 @@ function botc.refill_chests()
             if not node then
                 botc.ST.refill_chests[phash] = nil
             else
-                local ndef = minetest.registered_nodes[node.name]
-                if ndef and ndef.on_metadata_inventory_put then
-                    local meta = minetest.get_meta(pos)
-                    local inv = meta:get_inventory()
-                    if inv then
-                        inv:set_list("main", {})
-                        for slot, item in pairs(rc.inv) do
-                            inv:set_stack("main", slot, item)
-                        end
+                local meta = minetest.get_meta(pos)
+                local inv = meta:get_inventory()
+                if inv then
+                    local ln = rc.listname or "main"
+                    inv:set_list(ln, {})
+                    for slot, item in pairs(rc.inv) do
+                        inv:set_stack(ln, slot, item)
                     end
                 else
                     botc.ST.refill_chests[phash] = nil
