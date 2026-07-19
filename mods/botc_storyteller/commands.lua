@@ -82,6 +82,66 @@ minetest.register_chatcommand("botc_clearvotes", {
     end,
 })
 
+minetest.register_chatcommand("botc_check", {
+    description = "Check for incomplete night steps (VISIT markers, meta steps, required tokens)",
+    privs = { storyteller = true },
+    func = function(name, param)
+        local lines = {}
+        local visited = {}
+        for pname, data in pairs(botc.ST.roles) do
+            if data.alive and data.markers then
+                for _, m in ipairs(data.markers) do
+                    if m == "VISIT" then
+                        table.insert(visited, pname)
+                        break
+                    end
+                end
+            end
+        end
+        if #visited > 0 then
+            table.insert(lines, "VISIT remaining: " .. table.concat(visited, ", "))
+        end
+        local meta_steps = botc.get_meta_steps(botc.ST.current_day)
+        local incomplete = {}
+        for _, step in ipairs(meta_steps) do
+            if not (botc.ST.meta_steps_done or {})[step] then
+                table.insert(incomplete, step)
+            end
+        end
+        if #incomplete > 0 then
+            table.insert(lines, "Meta steps incomplete: " .. table.concat(incomplete, ", "))
+        end
+        local missing = botc.check_required_tokens()
+        if missing then
+            local msgs = {}
+            for _, m in ipairs(missing) do
+                table.insert(msgs, m.token .. " (need " .. m.needed .. ", have " .. m.have .. ")")
+            end
+            table.insert(lines, "Missing tokens: " .. table.concat(msgs, ", "))
+        end
+        if #lines == 0 then
+            return true, "All checks passed."
+        end
+        return true, "=== botc_check ===\n" .. table.concat(lines, "\n")
+    end,
+})
+
+minetest.register_chatcommand("botc_meta_done", {
+    description = "Mark a meta step as complete (dusk, minioninfo, demoninfo, dawn)",
+    privs = { storyteller = true },
+    func = function(name, param)
+        local valid = {dusk=true, minioninfo=true, demoninfo=true, dawn=true}
+        local step = param:lower():gsub("^%s+", ""):gsub("%s+$", "")
+        if not valid[step] then
+            return false, "Invalid step. Valid steps: dusk, minioninfo, demoninfo, dawn"
+        end
+        botc.ST.meta_steps_done = botc.ST.meta_steps_done or {}
+        botc.ST.meta_steps_done[step] = true
+        botc.save_state()
+        return true, "Meta step '" .. step .. "' marked complete."
+    end,
+})
+
 minetest.register_chatcommand("botc_list", {
     params = "",
     description = "List all assigned players",
@@ -258,6 +318,27 @@ minetest.register_chatcommand("botc_time", {
             botc.ST.execution_target = nil
             botc.ST.nomination_votes = {}
             botc.ST.current_timeofday = 0.0
+            botc.ST.meta_steps_done = {}
+            local night_roles = botc.get_night_order_roles(botc.ST.current_day)
+            local night_set = {}
+            for _, r in ipairs(night_roles) do
+                night_set[r] = true
+            end
+            for pname, data in pairs(botc.ST.roles) do
+                if data.alive then
+                    local rid = botc.normalize_role_id(data.role)
+                    if night_set[rid] then
+                        data.markers = data.markers or {}
+                        local has_visit = false
+                        for _, m in ipairs(data.markers) do
+                            if m == "VISIT" then has_visit = true; break end
+                        end
+                        if not has_visit then
+                            table.insert(data.markers, "VISIT")
+                        end
+                    end
+                end
+            end
         end
         botc.save_state()
         minetest.chat_send_all(minetest.colorize("#ffaa00", "Time is now: " .. param:upper()))
