@@ -259,21 +259,25 @@ local function get_node_list(base_name)
     for name, def in pairs(minetest.registered_nodes) do
         if not home_deco._banned[name] then
             local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
-            if base_name then
-            -- Exact material match only: clicking "wood" shows stair_wood,
-            -- slab_wood, etc. but NOT wood_tile or wood_tile_center (those
-            -- are separate style families - click them directly).
-            local mat = extract_material(name)
-            if mat == base_name then
-                table.insert(nodes, {name = name, desc = def.description or name})
-            end
-        else
             if not is_hidden then
-                if not is_shape_variant(name) then
-                    table.insert(nodes, {name = name, desc = def.description or name})
+                if base_name then
+                    -- Exact material match only: clicking "wood" shows stair_wood,
+                    -- slab_wood, etc. but NOT wood_tile or wood_tile_center (those
+                    -- are separate style families - click them directly). Only
+                    -- shape variants belong here; the base item itself is already
+                    -- shown in the main view.
+                    if is_shape_variant(name) then
+                        local mat = extract_material(name)
+                        if mat == base_name then
+                            table.insert(nodes, {name = name, desc = def.description or name})
+                        end
+                    end
+                else
+                    if not is_shape_variant(name) then
+                        table.insert(nodes, {name = name, desc = def.description or name})
+                    end
                 end
             end
-        end
         end
     end
     table.sort(nodes, function(a, b) return a.desc:lower() < b.desc:lower() end)
@@ -285,50 +289,89 @@ minetest.register_chatcommand("home_deco_verify", {
     description = "Verify every node appears in exactly one menu (main or variant)",
     privs = {server = true},
     func = function(name, param)
-        local seen_main = {}
-        local seen_variant = {}
-        local total = 0
-        local main_count = 0
+        -- Exercise the real menu-building function (get_node_list) exactly
+        -- the way the formspec does, instead of re-deriving a parallel
+        -- classification. This catches actual duplicate/missing entries
+        -- caused by bugs in get_node_list/extract_material, not just
+        -- disagreements with a second implementation of the same logic.
+        local occurrences = {}
+        local function record(node_list)
+            for _, entry in ipairs(node_list) do
+                occurrences[entry.name] = (occurrences[entry.name] or 0) + 1
+            end
+        end
 
+        local main_nodes = get_node_list(nil)
+        record(main_nodes)
+
+        -- A variant page is only reachable by clicking a main-view item,
+        -- which opens home_deco._deco_variant[name] = extract_material(item).
+        -- So the full set of reachable materials is exactly the materials
+        -- of main-view items.
+        local materials = {}
+        local material_count = 0
+        for _, entry in ipairs(main_nodes) do
+            local mat = extract_material(entry.name)
+            if not materials[mat] then
+                materials[mat] = true
+                material_count = material_count + 1
+            end
+        end
+        for material in pairs(materials) do
+            record(get_node_list(material))
+        end
+
+        -- Expected: every registered node that isn't hidden from creative
+        -- inventory and isn't banned should be reachable exactly once.
+        local expected = {}
+        local expected_count = 0
         for node_name, def in pairs(minetest.registered_nodes) do
             local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
-            if not hidden then
-                total = total + 1
-                local shape = is_shape_variant(node_name)
-                local material = extract_material(node_name)
-
-                if shape then
-                    if not seen_variant[material] then seen_variant[material] = {} end
-                    seen_variant[material][node_name] = true
-                else
-                    seen_main[node_name] = true
-                    main_count = main_count + 1
-                end
+            if not hidden and not home_deco._banned[node_name] then
+                expected[node_name] = true
+                expected_count = expected_count + 1
             end
         end
 
-        local group_count = 0
-        local variant_total = 0
-        for _, items in pairs(seen_variant) do
-            group_count = group_count + 1
-            for _ in pairs(items) do
-                variant_total = variant_total + 1
+        local missing, duplicated, unexpected = {}, {}, {}
+        for node_name in pairs(expected) do
+            local count = occurrences[node_name] or 0
+            if count == 0 then
+                table.insert(missing, node_name)
+            elseif count > 1 then
+                table.insert(duplicated, node_name .. " (x" .. count .. ")")
             end
         end
+        for node_name in pairs(occurrences) do
+            if not expected[node_name] then
+                table.insert(unexpected, node_name)
+            end
+        end
+        table.sort(missing)
+        table.sort(duplicated)
+        table.sort(unexpected)
 
         local report = {}
-        table.insert(report, "Total nodes: " .. total)
-        table.insert(report, "Main view: " .. main_count)
-        table.insert(report, "Variant views: " .. group_count .. " materials, " .. variant_total .. " items")
-        table.insert(report, "Sum: " .. (main_count + variant_total))
-        if main_count + variant_total ~= total then
-            table.insert(report, "WARNING: " .. total .. " != " .. (main_count + variant_total))
+        table.insert(report, "Expected reachable nodes: " .. expected_count)
+        table.insert(report, "Main view: " .. #main_nodes)
+        table.insert(report, "Variant pages: " .. material_count .. " materials")
+        if #missing == 0 and #duplicated == 0 and #unexpected == 0 then
+            table.insert(report, "OK: every node appears in exactly one menu")
         else
-            table.insert(report, "OK: every node in exactly one place")
+            if #missing > 0 then
+                table.insert(report, "MISSING from every menu (" .. #missing .. "): " .. table.concat(missing, ", "))
+            end
+            if #duplicated > 0 then
+                table.insert(report, "DUPLICATED across menus (" .. #duplicated .. "): " .. table.concat(duplicated, ", "))
+            end
+            if #unexpected > 0 then
+                table.insert(report, "UNEXPECTED (hidden/banned but shown) (" .. #unexpected .. "): " .. table.concat(unexpected, ", "))
+            end
         end
         return true, table.concat(report, "\n")
     end,
 })
+
 
 minetest.register_chatcommand("home_deco_ban", {
     params = "<item_name>",
