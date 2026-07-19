@@ -21,6 +21,7 @@ botc.ST = {
     player_notes = {},    -- { [author] = { [target] = "text" } }
     bag = {},             -- { [role_id] = count, ... } — custom role bag
     face_down = {},       -- { [role_id] = true } — roles hidden from players
+    nomination_votes = {},-- { [nominee] = yes_count } — votes for current day
     timer_active = false,
     timer_duration = 0,   -- total seconds set by ST
     timer_elapsed = 0,    -- elapsed seconds (frozen when clock is nominating/sweeping)
@@ -88,6 +89,49 @@ end
 -- least half of the alive players (rounded up) AND have the highest
 -- number of votes. If there is a tie for highest votes, no one is
 -- executed."
+-- Called after all nominations end; uses botc.ST.nomination_votes
+-- which maps nominee -> yes_count from the current day's sweeps.
+function botc.finalize_executions()
+    local votes = botc.ST.nomination_votes
+    local alive = botc.count_alive_players()
+    local threshold = math.ceil(alive / 2)
+
+    local best_nominee = nil
+    local best_count = 0
+    local tied = false
+
+    for nominee, yes_count in pairs(votes) do
+        if yes_count >= threshold then
+            if yes_count > best_count then
+                best_count = yes_count
+                best_nominee = nominee
+                tied = false
+            elseif yes_count == best_count then
+                tied = true
+            end
+        end
+    end
+
+    botc.ST.nomination_votes = {}
+    botc.save_state()
+
+    if tied then
+        minetest.chat_send_all(minetest.colorize("#ffaa00", "Vote tied — no execution today."))
+        return nil
+    end
+
+    if best_nominee then
+        botc.ST.execution_target = best_nominee
+        minetest.chat_send_all(minetest.colorize("#ff2222", best_nominee .. " is marked for execution! (" .. best_count .. " votes, threshold " .. threshold .. ")"))
+        return best_nominee
+    end
+
+    minetest.chat_send_all(minetest.colorize("#ffaa00", "No one reached the vote threshold — no execution today."))
+    return nil
+end
+
+-- Checks whether a specific vote tally would pass the threshold.
+-- Used during a single-nominee sweep for early display purposes.
 function botc.would_execute(yes_count, no_count)
     local alive = botc.count_alive_players()
     local threshold = math.ceil(alive / 2)

@@ -60,6 +60,7 @@ minetest.register_chatcommand("botc_clear", {
             botc.ST.vote_blocks = {}
             botc.ST.nominations = {}
             botc.ST.player_notes = {}
+            botc.ST.nomination_votes = {}
             botc.save_state()
             return true, "All assignments cleared"
         end
@@ -69,21 +70,15 @@ minetest.register_chatcommand("botc_clear", {
 
 minetest.register_chatcommand("botc_clearvotes", {
     params = "",
-    description = "Remove all vote blocks from the world",
+    description = "Deregister ownership of all vote blocks",
     privs = {},
     func = function(name, param)
         local ok, err = require_st(name) if not ok then return false, err end
         local count = 0
-        for phash, vb in pairs(botc.ST.vote_blocks) do
-            local pos = minetest.string_to_pos(phash)
-            if pos then
-                minetest.remove_node(pos)
-            end
-            count = count + 1
-        end
+        for _ in pairs(botc.ST.vote_blocks) do count = count + 1 end
         botc.ST.vote_blocks = {}
         botc.save_state()
-        return true, count .. " vote blocks removed"
+        return true, count .. " vote blocks deregistered"
     end,
 })
 
@@ -170,6 +165,23 @@ minetest.register_chatcommand("botc_vote", {
     end,
 })
 
+minetest.register_chatcommand("botc_end_noms", {
+    params = "",
+    description = "End nominations and finalize execution",
+    privs = {},
+    func = function(name, param)
+        local ok, err = require_st(name) if not ok then return false, err end
+        if not next(botc.ST.nomination_votes) then
+            return false, "No nominations recorded today"
+        end
+        local winner = botc.finalize_executions()
+        if winner then
+            return true, winner .. " is marked for execution"
+        end
+        return true, "No execution today"
+    end,
+})
+
 minetest.register_chatcommand("botc_clock", {
     params = "",
     description = "Reset the clock to idle",
@@ -236,12 +248,15 @@ minetest.register_chatcommand("botc_time", {
             botc.ST.nominations[botc.ST.current_day] = { nominators = {}, nominees = {} }
             botc.ST.clock_state = "idle"
             botc.ST.execution_target = nil
+            botc.ST.nomination_votes = {}
             botc.ST.current_timeofday = 0.50
             botc.refill_chests()
         elseif param == "evening" then
+            botc.ST.nomination_votes = {}
             botc.ST.current_timeofday = 0.783
         elseif param == "night" then
             botc.ST.execution_target = nil
+            botc.ST.nomination_votes = {}
             botc.ST.current_timeofday = 0.0
         end
         botc.save_state()

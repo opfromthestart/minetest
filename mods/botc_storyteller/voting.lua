@@ -272,9 +272,13 @@ minetest.register_entity("botc_storyteller:clock_hand", {
                 end
                 minetest.chat_send_all(minetest.colorize("#ffaa00", "Votes: " .. yes_count .. " Yes / " .. no_count .. " No"))
                 local nom = botc.ST.clock_nominee
-                if nom and botc.would_execute(yes_count, no_count) then
-                    botc.ST.execution_target = nom
-                    minetest.chat_send_all(minetest.colorize("#ff2222", nom .. " is marked for execution!"))
+                if nom then
+                    botc.ST.nomination_votes[nom] = (botc.ST.nomination_votes[nom] or 0) + yes_count
+                    if botc.would_execute(yes_count, no_count) then
+                        minetest.chat_send_all(minetest.colorize("#ffaa00", nom .. " has enough votes to be on the block."))
+                    else
+                        minetest.chat_send_all(minetest.colorize("#ffaa00", nom .. " did not receive enough votes."))
+                    end
                 end
                 botc.ST.clock_state = "idle"
                 botc.ST.clock_angle = nil

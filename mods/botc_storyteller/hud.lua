@@ -225,6 +225,9 @@ minetest.register_globalstep(function(dtime)
                 botc.ST.timer_elapsed = 0
                 botc.save_state()
                 minetest.chat_send_all(minetest.colorize("#ffaa00", "Timer finished: " .. (botc.ST.timer_name ~= "" and botc.ST.timer_name or "Unnamed")))
+                if next(botc.ST.nomination_votes) then
+                    botc.finalize_executions()
+                end
             end
         end
     end

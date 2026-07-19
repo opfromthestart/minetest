@@ -229,6 +229,7 @@ function botc.passout(player_list)
     botc.ST.phase = "night" -- games start at night (botc_guide 2.3)
     botc.ST.current_timeofday = 0.0
     botc.ST.vote_blocks = {}
+    botc.ST.nomination_votes = {}
     botc.save_state()
 
     return true, "Passed out " .. count .. " roles:\n" .. table.concat(assigned, "\n")
@@ -300,6 +301,7 @@ function botc.passout_from_bag()
     botc.ST.phase = "night"
     botc.ST.current_timeofday = 0.0
     botc.ST.vote_blocks = {}
+    botc.ST.nomination_votes = {}
     botc.save_state()
 
     return true, "Passed out " .. player_count .. " roles:\n" .. table.concat(assigned, "\n")

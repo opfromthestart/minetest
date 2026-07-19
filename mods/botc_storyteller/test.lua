@@ -664,7 +664,7 @@ botc.save_state()
 -- Recreate state but load
 local saved = mock_storage["game_state"]
 assert_true(#saved > 0, "state saved")
-botc.ST = {roles={}, nominations={}, phase="day", script=nil, execution_zone=nil, vote_blocks={}, clock_pos=nil, clock_state="idle", clock_nominator=nil, clock_nominee=nil, current_day=1, player_notes={}}
+botc.ST = {roles={}, nominations={}, phase="day", script=nil, execution_zone=nil, vote_blocks={}, clock_pos=nil, clock_state="idle", clock_nominator=nil, clock_nominee=nil, current_day=1, player_notes={}, nomination_votes={}}
 botc.load_state()
 assert_eq(botc.ST.phase, "night", "persisted phase night")
 
@@ -721,8 +721,8 @@ botc.save_state()
 botc.ST = {roles={}, nominations={}, phase="day", script=nil, execution_zone=nil,
            vote_blocks={}, clock_pos=nil, clock_state="idle", clock_nominator=nil,
            clock_nominee=nil, clock_sweep_start=0, execution_target=nil,
-           current_day=1, current_timeofday=0.5,
-           player_notes={}}
+            current_day=1, current_timeofday=0.5,
+            player_notes={}, nomination_votes={}}
 botc.load_state()
 
 assert_eq(botc.ST.phase, "evening", "phase persisted")
@@ -908,6 +908,47 @@ do
     local yes, no = botc.tally_votes(vote_blocks)
     assert_true(botc.would_execute(yes, no), "3 of 6 alive meets ceil(6/2)=3 threshold; executes")
 end
+
+-- ============================================================
+-- Multi-nomination execution finalization (botc_guide 5.2.3)
+-- ============================================================
+reset_state()
+for _, n in ipairs({"P1","P2","P3","P4","P5","P6","P7"}) do
+    botc.ST.roles[n] = {role = "Villager", team = "townsfolk", alive = true, dead_vote_used = false, markers = {}}
+end
+
+-- Test: single nominee with enough votes wins
+botc.ST.nomination_votes = {Alice = 4, Bob = 2}
+local winner = botc.finalize_executions()
+assert_eq(winner, "Alice", "highest votes above threshold wins")
+assert_eq(botc.ST.execution_target, "Alice", "execution target set to winner")
+assert_eq(next(botc.ST.nomination_votes), nil, "nomination_votes cleared after finalization")
+
+-- Test: tie for highest votes -> no execution
+reset_state()
+for _, n in ipairs({"P1","P2","P3","P4","P5","P6","P7"}) do
+    botc.ST.roles[n] = {role = "Villager", team = "townsfolk", alive = true, dead_vote_used = false, markers = {}}
+end
+botc.ST.nomination_votes = {Alice = 4, Bob = 4, Charlie = 1}
+winner = botc.finalize_executions()
+assert_eq(winner, nil, "tie for highest votes means no execution")
+assert_eq(botc.ST.execution_target, nil, "execution target nil after tie")
+
+-- Test: no one meets threshold -> no execution
+reset_state()
+for _, n in ipairs({"P1","P2","P3","P4","P5","P6","P7"}) do
+    botc.ST.roles[n] = {role = "Villager", team = "townsfolk", alive = true, dead_vote_used = false, markers = {}}
+end
+botc.ST.nomination_votes = {Alice = 3, Bob = 2}  -- threshold is ceil(7/2)=4
+winner = botc.finalize_executions()
+assert_eq(winner, nil, "no one meets threshold -> no execution")
+assert_eq(botc.ST.execution_target, nil, "execution target nil when no threshold met")
+
+-- Test: empty nomination_votes -> nil
+reset_state()
+botc.ST.nomination_votes = {}
+winner = botc.finalize_executions()
+assert_eq(winner, nil, "no nominations -> no execution")
 
 -- ============================================================
 section("25. Nomination Rules via Real Commands")
