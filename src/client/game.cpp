@@ -28,6 +28,7 @@
 #include "gui/profilergraph.h"
 #include "localplayer.h"
 #include "minimap.h"
+#include "mumble_link.h"
 #include "network/networkexceptions.h"
 #include "nodedef.h"         // Needed for determining pointing to nodes
 #include "nodemetadata.h"
@@ -395,6 +396,7 @@ Game::Game() :
 Game::~Game()
 {
 	delete client;
+	mumble_link.reset();
 	soundmaker.reset();
 	sound_manager.reset();
 
@@ -462,6 +464,8 @@ bool Game::startup(volatile std::sig_atomic_t *kill,
 
 	if (!createClient(start_data))
 		return false;
+
+	client->setMumbleLink(mumble_link.get());
 
 	m_rendering_engine->initialize(client, hud);
 
@@ -740,6 +744,8 @@ bool Game::initSound()
 
 	soundmaker = std::make_unique<SoundMaker>(sound_manager.get(), nodedef_manager);
 	soundmaker->registerReceiver(eventmgr);
+
+	mumble_link = std::make_unique<MumbleLink>();
 
 	return true;
 }
@@ -2648,6 +2654,19 @@ void Game::updateSound(f32 dtime)
 			(1.0f/BS) * (parent ? parent->getVelocity() : player->getSpeed()),
 			camera->getDirection(),
 			camera->getCameraNode()->getUpVector());
+
+	// Update Mumble positional audio
+	if (mumble_link && mumble_link->isConnected()) {
+		v3f cam_pos = (1.0f / BS) * camera->getCameraNode()->getPosition()
+			+ intToFloat(camera_offset, 1.0f);
+		v3f cam_dir = camera->getDirection();
+		v3f cam_up = camera->getCameraNode()->getUpVector();
+		v3f player_pos = (1.0f / BS) * player->getPosition();
+		v3f player_dir = cam_dir;
+		v3f player_up = cam_up;
+		mumble_link->update(cam_pos, cam_dir, cam_up,
+				    player_pos, player_dir, player_up);
+	}
 
 	sound_volume_control(sound_manager.get(), device->isWindowActive());
 

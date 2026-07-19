@@ -57,6 +57,10 @@ AppDir
 # GNU Patch reject file
 *.rej
 
+## Build dependencies (not committed)
+/build_nsis/
+/build_win/
+
 ## Non-static Luanti directories or symlinks to these
 /bin/
 /games/*
@@ -70,6 +74,8 @@ AppDir
 /sounds
 /mods/*
 !/mods/mods_here.txt
+!/mods/botc_storyteller/
+!/mods/home_deco/
 /worlds/*
 !/worlds/worlds_here.txt
 /clientmods/*

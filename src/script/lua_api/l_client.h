@@ -67,6 +67,9 @@ private:
 	// get_csm_restrictions()
 	static int l_get_csm_restrictions(lua_State *L);
 
+	// set_mumble_context(context)
+	static int l_set_mumble_context(lua_State *L);
+
 public:
 	static void Initialize(lua_State *L, int top);
 	static void InitializeSSCSM(lua_State *L, int top);

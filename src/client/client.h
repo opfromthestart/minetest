@@ -40,6 +40,7 @@ class MeshUpdateManager;
 class Minimap;
 class ModChannelMgr;
 class MtEventManager;
+class MumbleLink;
 class NetworkPacket;
 class NodeDefManager;
 class ParticleManager;
@@ -427,6 +428,9 @@ public:
 		return m_csm_restriction_flags & flag;
 	}
 
+	void setMumbleLink(MumbleLink *mumble_link) { m_mumble_link = mumble_link; }
+	MumbleLink *getMumbleLink() const { return m_mumble_link; }
+
 	bool joinModChannel(const std::string &channel) override;
 	bool leaveModChannel(const std::string &channel) override;
 	bool sendModChannelMessage(const std::string &channel,
@@ -605,6 +609,8 @@ private:
 	// CSM restrictions byteflag
 	u64 m_csm_restriction_flags = CSMRestrictionFlags::CSM_RF_NONE;
 	u32 m_csm_restriction_noderange = 8;
+
+	MumbleLink *m_mumble_link = nullptr;
 
 	std::unique_ptr<ModChannelMgr> m_modchannel_mgr;
 

@@ -27,6 +27,7 @@
 
 class Game;
 class GameUI;
+class MumbleLink;
 class SoundMaker;
 class Server;
 class NodeMetadata;
@@ -320,6 +321,7 @@ private:
 
 	std::unique_ptr<ISoundManager> sound_manager;
 	std::unique_ptr<SoundMaker> soundmaker;
+	std::unique_ptr<MumbleLink> mumble_link;
 
 	ChatBackend *chat_backend = nullptr;
 	CaptureLogOutput m_chat_log_buf;

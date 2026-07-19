@@ -3,6 +3,7 @@
 // Copyright (C) 2015 nerzhul, Loic Blot <loic.blot@unix-experience.fr>
 
 #include "client/client.h"
+#include "client/mumble_link.h"
 
 #include "exceptions.h"
 #include "irr_v2d.h"
@@ -1684,6 +1685,9 @@ void Client::handleCommand_CSMRestrictionFlags(NetworkPacket *pkt)
 	// Restrictions were received -> load mods if it's enabled
 	// Note: this should be moved after mods receptions from server instead
 	loadMods();
+
+	// Auto-join mumble context channel
+	joinModChannel("mumble:context");
 }
 
 void Client::handleCommand_PlayerSpeed(NetworkPacket *pkt)
@@ -1774,13 +1778,28 @@ void Client::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 		<< " on channel " << channel_name << ". sender: `" << sender << "`, message: "
 		<< channel_msg << std::endl;
 
+	if (channel_name == "mumble:context") {
+		MumbleLink *ml = getMumbleLink();
+		if (!ml)
+			return;
+		std::string::size_type delim = channel_msg.find('\t');
+		if (delim == std::string::npos)
+			return;
+		std::string target = channel_msg.substr(0, delim);
+		std::string context = channel_msg.substr(delim + 1);
+		if (target == m_playername)
+			ml->setContext(context);
+		return;
+	}
+
 	if (!m_modchannel_mgr->channelRegistered(channel_name)) {
 		verbosestream << "Server sent us messages on unregistered channel "
 			<< channel_name << ", ignoring." << std::endl;
 		return;
 	}
 
-	m_script->on_modchannel_message(channel_name, sender, channel_msg);
+	if (m_script)
+		m_script->on_modchannel_message(channel_name, sender, channel_msg);
 }
 
 void Client::handleCommand_ModChannelSignal(NetworkPacket *pkt)
@@ -1849,7 +1868,7 @@ void Client::handleCommand_ModChannelSignal(NetworkPacket *pkt)
 	}
 
 	// If signal is valid, forward it to client side mods
-	if (valid_signal)
+	if (valid_signal && m_script)
 		m_script->on_modchannel_signal(channel, signal);
 }
 

@@ -8,6 +8,7 @@
 #include "client/client.h"
 #include "client/sound.h"
 #include "client/clientenvironment.h"
+#include "client/mumble_link.h"
 #include "common/c_content.h"
 #include "common/c_converter.h"
 #include "cpp_api/s_base.h"
@@ -314,6 +315,16 @@ int ModApiClient::l_get_csm_restrictions(lua_State *L)
 	return 1;
 }
 
+// set_mumble_context(context)
+int ModApiClient::l_set_mumble_context(lua_State *L)
+{
+	std::string context = luaL_checkstring(L, 1);
+	MumbleLink *mumble_link = getClient(L)->getMumbleLink();
+	if (mumble_link)
+		mumble_link->setContext(context);
+	return 0;
+}
+
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -334,6 +345,7 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(get_builtin_path);
 	API_FCT(get_language);
 	API_FCT(get_csm_restrictions);
+	API_FCT(set_mumble_context);
 }
 
 void ModApiClient::InitializeSSCSM(lua_State *L, int top)
