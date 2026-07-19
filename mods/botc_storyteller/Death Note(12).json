@@ -1,0 +1,58 @@
+[
+  {
+    "id": "_meta",
+    "name": "Death Note",
+    "author": "opfromthestart",
+    "bootlegger": [
+      "Minion and outsider counts are arbitrary.",
+      "L is always an in-play character.",
+      "If the win condition of either team changes, this will be announced on day 1. The specific change will not be announced.",
+      "Private chats to the storyteller can also be done from DMs.",
+      "Every game gets an episode title that may give a hint."
+    ]
+  },
+  {
+    "id": "gs4vi",
+    "name": "L",
+    "team": "townsfolk",
+    "ability": "Each day, privately guess what the Amnesiac's ability is: you learn how accurate you are. The Amnesiac learns what you guess the following night. If you get a bingo, you and the Amnesiac learn each other. If L dies before getting a bingo, the Amnesiac's ability becomes stronger. Start knowing the setup counts.",
+    "setup": false
+  },
+  "chef",
+  "noble",
+  "bountyhunter",
+  "sailor",
+  "chambermaid",
+  "mathematician",
+  "flowergirl",
+  "monk",
+  "gossip",
+  "savant",
+  "artist",
+  "fisherman",
+  "poppygrower",
+  "lunatic",
+  "drunk",
+  "moonchild",
+  "mutant",
+  "damsel",
+  "harpy",
+  "witch",
+  "cerenovus",
+  "assassin",
+  "eviltwin",
+  "goblin",
+  "vizier",
+  {
+    "id": "b6b9h",
+    "name": "Amnesiac",
+    "team": "demon",
+    "ability": "You do not know what your ability is. Each day, choose between asking a question or receiving one true and one false statement about your ability.",
+    "firstNight": 2,
+    "firstNightReminder": "Do the ability",
+    "otherNight": 2,
+    "otherNightReminder": "Do the ability",
+    "setup": false
+  },
+  "bootlegger"
+]

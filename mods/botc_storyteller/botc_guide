@@ -1,0 +1,436 @@
+# Blood on the Clocktower — Complete Game Description
+
+
+## 1. Overview
+
+Blood on the Clocktower is a social deduction game for 5–20 players (plus one Storyteller), designed by Steven Medway and published by The Pandemonium Institute in 2022. It shares core mechanics with games like Mafia/Werewolf but with significant innovations: **dead players continue to participate**, information can be **misleading**, and the **Storyteller** actively shapes the game rather than being a passive moderator.
+
+Playtime ranges from 30 to 120 minutes.
+
+
+## 2. Core Concepts
+
+### 2.1 The Storyteller
+
+The Storyteller is a neutral game master who runs the game. They:
+- Select the script and assign roles
+- Wake players at night to use abilities
+- Provide information (true or false)
+- Decide outcomes where abilities are ambiguous
+- Declare when a team has won
+
+The Storyteller uses a **Grimoire** — a special box that acts as their private game board containing all character tokens, reminder tokens, and night sheets.
+
+### 2.2 Teams
+
+There are two teams:
+
+| Team | Goal |
+|------|------|
+| **Good** | Find and execute the Demon. If the Demon dies, good wins. |
+| **Evil** | Destroy the town. If only two players are left alive, evil wins. |
+
+If both teams would win simultaneously, **good wins**.
+
+### 2.3 Phases
+
+The game alternates between **night** and **day**:
+
+- **Night**: Players close their eyes. The Storyteller wakes specific players to use abilities or receive information.
+- **Day**: Players open their eyes, talk freely, share information, and vote to execute someone.
+
+The game **starts with a night phase** (not day).
+
+
+## 3. Character Types
+
+There are four main character types:
+
+### 3.1 Townsfolk (Good)
+Good characters with abilities that **benefit** the good team. Examples include:
+- **Washerwoman**: First night, learns that one of two players is a specific Townsfolk
+- **Empath**: Each night, learns how many of their alive neighbors are evil
+- **Slayer**: Once per game during the day, may publicly choose a player; if they are the Demon, the Demon dies
+- **Investigator**: First night, learns that one of two players is a Minion
+- **Fortune Teller**: Each night, chooses two players and learns if either is the Demon
+
+### 3.2 Outsider (Good)
+Good characters with abilities that **hinder** the good team. Examples include:
+- **Drunk**: Thinks they are a Townsfolk but has no ability; the Storyteller may give them false information
+- **Recluse**: May register as evil to other abilities
+- **Sweetheart**: When they die, one player becomes drunk permanently
+- **Butler**: Each night must choose a master; can only vote if their master votes
+- **Goon**: The first player to choose them with an ability each night becomes drunk; the Goon changes to that player's alignment
+
+### 3.3 Minion (Evil)
+Evil characters that support the Demon with abilities that hinder the good team. Examples include:
+- **Poisoner**: Each night, chooses a player to poison until dusk
+- **Spy**: Sees the Grimoire (knows all roles) and may register as good
+- **Scarlet Woman**: If the Demon dies and at least 5 players are alive, becomes the Demon
+- **Baron**: Adds extra Outsiders to the game
+- **Witch**: The first player to nominate the Witch's chosen player each day is executed instead
+
+### 3.4 Demon (Evil)
+The primary evil character with the ability to **kill at night**. The good team wins by executing the Demon. Examples include:
+- **Imp**: Each night* chooses a player to die; if the Imp dies, they may choose a Minion to become the new Imp
+- **Pukka**: Each night chooses a player; that player becomes poisoned and dies the following night
+- **Po**: Can kill one player per night, or skip killing to kill three the next night
+- **Fang Gu**: Each night* kills a player; once per game may choose an Outsider to become the new Fang Gu
+- **Vortox**: All Townsfolk abilities yield false information; if good executes anyone other than the Vortox, evil wins
+- **No Dashii**: Poisons both alive neighbors
+
+### 3.5 Additional Types
+
+**Travellers**: Players who can enter or exit mid-game. Their identity and ability are known to all, but their alignment (good or evil) is secret. They can be exiled instead of executed and do not count toward the evil win condition.
+
+**Fabled**: Storyteller characters that modify game rules — not player characters, but rule adjustments.
+
+
+## 4. Setup
+
+### 4.1 Choosing a Script
+The Storyteller selects a **script** (set of possible characters). Standard scripts contain 22–25 characters. The core box includes three editions:
+- **Trouble Brewing** (recommended for beginners, 5+ players)
+- **Bad Moon Rising** (7+ players recommended)
+- **Sects & Violets** (7+ players recommended)
+
+### 4.2 Player Count and Role Distribution
+
+| Players | Townsfolk | Outsiders | Minions | Demons |
+|---------|-----------|-----------|---------|--------|
+| 5 | 3 | 0 | 1 | 1 |
+| 6 | 3 | 1 | 1 | 1 |
+| 7 | 5 | 0 | 1 | 1 |
+| 8 | 5 | 1 | 1 | 1 |
+| 9 | 5 | 2 | 1 | 1 |
+| 10 | 7 | 0 | 2 | 1 |
+| 11 | 7 | 1 | 2 | 1 |
+| 12 | 7 | 2 | 2 | 1 |
+| 13 | 9 | 0 | 3 | 1 |
+| 14 | 9 | 1 | 3 | 1 |
+| 15 | 9 | 2 | 3 | 1 |
+
+### 4.3 Assigning Roles
+The Storyteller draws character tokens from the bag and places them in the Grimoire matching seating positions. Each player receives their character token in secret.
+
+### 4.4 First Night Information
+If there are **7 or more players**, the Demon learns:
+- Which players are Minions
+- Three good character tokens **not in play** (to use as bluffs)
+
+Minions learn who the Demon is.
+
+
+## 5. Game Flow
+
+### 5.1 Night Phase
+
+The Storyteller follows the **night sheet** which lists characters in order of operation. The general order is:
+
+1. **Dusk abilities** (characters that act at dusk)
+2. **Minion abilities** (Poisoner, Witch, Spy, etc.)
+3. **Protection abilities** (Monk, Innkeeper, etc.)
+4. **Demon kills**
+5. **Information-gathering abilities** (Empath, Fortune Teller, etc.)
+6. **Dawn abilities** (characters that act at dawn)
+
+At night, the Storyteller:
+- Taps players to wake them (2 taps = "eyes open")
+- Communicates silently using hand signals (YES, NO, numbers, pointing)
+- Confirms choices with a downward point
+- Provides information (which may be false if the player is drunk or poisoned)
+
+**Important**: On the **first night**, the Demon does not kill. On all subsequent nights, the Demon kills.
+
+**Death at night**: If a player dies at night, the Storyteller announces who died at the start of the next day, but **not how they died** or their character.
+
+### 5.2 Day Phase
+
+#### 5.2.1 Discussion
+Players talk freely — publicly in the "Town Square" or in private conversations. Dead players may continue speaking. Players may say whatever they want; lying is encouraged (especially for evil players).
+
+#### 5.2.2 Nominations
+Any **alive** player may nominate any other player (alive or dead) for execution. Dead players cannot nominate. Each player can nominate once per day and be nominated once per day.
+
+When a nomination occurs:
+1. The nominator states who they are nominating and why
+2. The nominated player may defend themselves briefly
+3. All players (alive and dead) may vote by raising their hands
+
+#### 5.2.3 Voting and Execution
+- Alive players may vote as many times as they wish
+- Dead players may vote **only once** for the remainder of the game
+- A player is executed if they receive **votes from at least half of the alive players (rounded up)** AND have the **highest number of votes**
+- If there is a tie for highest votes, **no one is executed**
+- When an execution occurs, the day **immediately ends** and night begins
+
+#### 5.2.4 Death
+When a player is executed, they **die** (unless an ability prevents it). They lose their ability immediately. Dead players flip their life token and gain a shroud in the Grimoire.
+
+
+## 6. Special States
+
+### 6.1 Drunk and Poisoned
+
+A drunk or poisoned player **has no ability** — their ability does not function. However, they **think they still have it**, and the Storyteller acts as if they do.
+
+Key rules:
+- If an ability would provide information, the Storyteller **may give false information**
+- Drunk/poisoned players do not know they are drunk/poisoned
+- Drunk and poisoned are independent — a player can be both
+- If a drunk/poisoned player becomes sober/healthy, their ability resumes
+- If the source of poisoning dies, the poison effect ends
+
+### 6.2 Death
+- Dead players **lose their ability** immediately
+- Dead players may still **talk** freely
+- Dead players may vote **only once more** in the entire game
+- Dead players **cannot nominate**
+- Dead players cannot be killed again
+
+### 6.3 Alignment Changes
+If a player changes alignment, their character stays the same. If they change character, their alignment stays the same. Players learn of changes secretly.
+
+
+## 7. Win Conditions
+
+### 7.1 Good Team Wins When
+- The Demon dies and **no new Demon is created**
+- (Some characters have special win conditions)
+
+### 7.2 Evil Team Wins When
+- Only **two players remain alive**
+- (Some characters have special win conditions)
+
+### 7.3 Storyteller May Call the Game Early
+If victory is certain, the Storyteller may declare the winner to save time. For example, if only four players are alive and good executes a non-Demon, evil will almost certainly win (Demon kills one at night, leaving two alive). However, if protection abilities (Monk, Soldier) are still alive, the game should continue.
+
+
+## 8. Storyteller Best Practices
+
+### 8.1 Running the Game Smoothly
+- Walk to different parts of the circle at night to avoid revealing the Demon's location
+- When confirming choices, point downward at the chosen player for clear confirmation
+- Tap shoulders or knees quietly to wake players — multiple taps if clothing is thick
+- Keep the Grimoire level to prevent players from seeing inside
+- Hold the Grimoire by the center pillar, not the edges
+
+### 8.2 Handling Abilities
+- Abilities work **immediately**
+- Only tell players what their own ability says they learn — secrets are secret
+- If an ability does not say "choose", the **Storyteller** makes the decision
+- If a player tries to use their ability incorrectly, tell them verbally (day) or shake your head (night)
+- When a player becomes a new character, they gain the new ability immediately and lose the old one
+
+### 8.3 Bluffing and Fairness
+- When good players use abilities that require Grimoire manipulation (Slayer, Juggler), move tokens accordingly
+- When evil players bluff these abilities, **pretend to move tokens in the same way** so veterans cannot tell the difference
+
+
+## 9. Key Terminology
+
+| Term | Meaning |
+|------|---------|
+| **Ability** | A character's special power |
+| **Alignment** | Good or evil |
+| **Alive** | Has not died; has ability, can vote freely, can nominate |
+| **Choose** | Indicates the **player** decides (if absent, Storyteller decides) |
+| **Dead** | Has died; loses ability, can vote once more, cannot nominate |
+| **Each night** | Every night phase |
+| **Each night\*** | Every night **except the first** |
+| **Execute** | Kill by day vote |
+| **Grimoire** | The Storyteller's private game box |
+| **Mad** | A state related to madness (specific to some characters) |
+| **Nominate** | Propose a player for execution |
+| **Script** | The set of possible characters for a game |
+| **Shroud** | Token placed on dead characters in the Grimoire |
+
+
+## 10. Getting All Character Details
+
+This description covers the **game framework**. To actually storytell or write a simulator, you will need the **full character almanac** which contains:
+
+- Complete ability text for every character (100+ characters across all editions)
+- "How to Run" instructions for each character
+- **Jinxes** — special rules for when certain characters interact
+- Night order for each script
+- Reminder tokens needed for each character
+
+The definitive rules are in the **Character Almanac** for each edition. For a simulator, you would need to encode:
+- All character abilities and their timing (first night, each night, each night*, day abilities, passive abilities)
+- All character interactions and jinxes
+- The complete night order for each script
+- Drunk/poisoned mechanics for every information ability
+
+When the Demon dies, the game ends and good wins. It does not matter that other evil players are still alive.
+Evil wins when there are only 2 alive players (not including Travellers).
+To be executed, a player must receive votes equal to at least half the number of living players. Even if this happens, however, that player is not immediately executed. Other players may also be nominated.
+The player who receives the most votes is executed, so long as they received votes equal to at least half the number of alive players.
+If two (or more) players receive the most votes, neither is executed.
+Evil players outnumbering good players does not automatically end the game. All Townsfolk being dead also does not automatically end the game. In this situation, good can still win via Lachlan nominating Will, though may need the dead to vote to succeed.
+Each player is only allowed to nominate once per day. They may also only be nominated once per day.
+Living players may vote as many times as they like each day.
+When the votes are taken, the player who is being voted on votes last. The voting starts with that player's clockwise neighbour (Chloe's clockwise neighbour is Jon), and goes clockwise.
+During the night phase, all of the Storyteller’s communication with players is silent. Various hand signals are used to communicate. The Argentine piledriver, which involves driving your opponent head-first into the ground from the backbreaker rack position, is not an appropriate technique because it is loud.
+If a character’s ability text says that that character acts ‘each night*’, they will not act on the first night.
+When a player dies, you do not publicly announce their character or alignment - that stays secret.
+Dead players remain full participants in the game, which includes being allowed to talk.
+When a player dies, they lose their character ability.
+Dead players may not nominate, and may only vote one more time for the rest of the game.
+The number of each character type you will put in the game is strictly defined by the total number of players. A table laying out the relevant counts can be found on the traveller and setup sheets.
+The evil team learn who each other are. Minions wake up with the other Minions on the first night, while the Demon wakes up alone.
+The Demon starts the game knowing 3 not in-play good characters (characters they can safely pretend to be).
+When a player changes character, they do not retain the abilities of the character they were before. In this case, because Jams is now the Imp, the Poisoner ability is no longer in-play.
+A poisoned player has no ability, but the Storyteller pretends that they do. You would wake a poisoned Empath up as normal, but could give them any information you want - true or false. 
+A poisoned player has no ability. If the Demon tries to kill a poisoned Soldier, that Soldier has no ability to protect themselves, so they will die. Unlike what happened with the Empath in the last question, the Storyteller doesn’t get a choice here.
+When a Traveller joins a game, all players learn their character, but not their alignment.
+When an evil Traveller joins the game, they learn who the Demon is (the Demon does not learn the Traveller is evil). If they are a good Traveller, they learn nothing.
+When you add a Fabled character to your game, a player does not become that Fabled character. You just announce that that Fabled character is in-play. The Fabled are more like ‘Storyteller characters’, modifiers to help make the game more enjoyable, or run more smoothly.
+Blood on the Clocktower games that have only 5-6 players have slightly different rules. In a 5 or 6 player game, the Minion & Demon do not learn each other, and the Demon does not learn 3 not-in-play good characters on the first night.
+All players may speak during a nomination. A rigid accusation and defence, where only the accuser and the accused are allowed to speak, is not how the game is designed to be played. That said, you may want to step in to give a nominated player a chance to defend themselves before the vote is taken.
+If the Revolutionary is in-play, two neighbouring players are known to be the same alignment. After the first player draws a character out of the bag, the second player receives a character of the same alignment from the Storyteller. As Patrick has drawn the Demon token, Edd will be a Minion.
+When the Fiddler enters play, the Demon secretly chooses a good player to ‘challenge’. All players vote on which player (and by extension, which team) they want to win.
+The Sentinel might add an Outsider, take away an Outsider, or neither.
+The Spirit of Ivory means there can’t be more than 1 extra evil player. The Devil’s Advocate choosing the Goon would normally have turned the Goon evil. In this case, however, the Goon remained good, because there was already an extra evil player - the former Saint.
+If two jinxed characters are on a script, the Storyteller should still read out the special rule at the beginning of the game, regardless of whether they are actually in-play.
+The Washerwoman learns one Townsfolk character and two players which it might be. In this case, the Washerwoman will learn that either Steven or Will is the Empath.
+The Librarian learns one Outsider character and two players which it might be. In this case, the Librarian will learn that either Lachlan or Amy is the Saint.
+The Investigator learns one Minion character and two players which it might be. In this case, the Investigator will learn that either Steffen or Amy is the Baron. 
+The Chef learns how many pairs of evil players are sitting next to each other. In this case, there are no evil players sitting next to each other.
+The Empath learns how many evil players are neighboring the Empath. In this case, there are no evil players neighboring the Empath.
+The Fortune Teller chooses two players and learns if either player is a Demon. In this case, Chloe is the Demon, and was one of the two players chosen.
+The Undertaker learns which character died today. In this case, the Investigator died today.
+Each night, the Imp kills a player. Each night, the Monk protects a player from the Imp. In this case, the Monk has protected Edd from the Imp, so Edd lives and no deaths occur tonight.
+The Ravenkeeper learns the character of the player that they pointed to. In this case, Jon pointed to Reggie, who is the Washerwoman.
+If a Townsfolk nominates the Virgin, the Townsfolk player is executed. Chloe is a Townsfolk, so she is executed. 
+If they Slayer uses their ability on a Demon-player, that player dies. If the Slayer uses their ability on a non-Demon player, nothing happens and that player lives. Jon is the Demon, so he dies.
+The Soldier is safe from the Demon, so cannot be killed by the Imp. 
+The Mayor's ability means that when three players are alive, and no execution occurs that day, the good team wins. A Mayor is in play, and still alive. 
+The Butler ability doesn't force the player to vote when they don't want to. The Butler ability restricts the Butler's ability to vote to only those times that their Master is voting too. So, when Theo's hand is down then Lachlan must lower his hand, but if Theo's hand is up then Lachlan may choose whether to raise his hand or not.
+A drunk player can get false information. Since Will is the drunk, you may lie to him. 
+Drunk players have no ability, but they think they do. While they can wake at night to get (false?) information, they have no ability with which to affect the game. Jon has no Slayer ability, so Chloe lives.
+The Recluse might register as any Minion or Demon character at any time. It is your choice whether this happens or not, and if it does happen, you choose which Minion or Demon character the Recluse registers as.
+If the Saint is executed, the game ends and evil wins. Amy was the Saint, so evil wins.
+The Ravenkeeper is poisoned. They have no ability, but the Storyteller pretends that they do. So, the Storyteller can show any character they want to the Ravenkeeper.
+The Spy sees the Grimoire and everything in it. 
+The Grandmother learns a good player and their character.  In this case, they learn that Will is the Professor.
+Each night, the Sailor chooses an alive player: either the Sailor or the player they choose is drunk until dusk. The Sailor is sober, so the Sailor can’t die. Because Edd made Chloe drunk instead of himself, Edd will not die when executed.
+Each night, the Chambermaid chooses 2 alive players and learns how many woke tonight due to their ability. Only Steffen woke up, so Patrick will learn a 1.
+If the Exorcist chooses the Demon with their ability, the Demon wakes up, learns they were chosen by the Exorcist, and learns who the Exorcist is. The Exorcist ability then prevents the Demon from waking up to attack players that night.
+Each night, the Innkeeper chooses 2 players: those 2 players cannot die tonight. In this case, the Innkeeper chose Ben and Lachlan. When the Po attacked Ben, the Innkeeper’s ability protected him, so Ben did not die.
+At night, the Gambler guesses a player’s character: if they guess wrong, they die. In this case, the Gambler guessed that Jams is the Tea Lady. Jams is actually the Godfather, so Steven dies.
+Each day, the Gossip may make a public statement. That night, if it was true, a player dies. Chloe the Demon is sitting next to two good players, so the Gossip’s statement was correct and the Gossip ability will kill a player tonight.
+Once per game, at night, the Courtier may choose a character: that character becomes drunk for 3 days and 3 nights. Because Reggie has picked the Pukka, Edd the Pukka will become drunk.
+The Professor can bring a dead Townsfolk back to life. Jon is the Gambler, a Townsfolk, so he comes back to life!
+When a Minion dies by execution, the Minstrel makes everybody else drunk! This includes the evil team, so evil abilities will also not work tonight. The Minstrel's drunkenness lasts until dusk the following day. 
+If the Tea Lady's living neighbors are both good, neither can die by any means (including execution). Both Amy and Steven are good, so Steven will survive being executed.
+As long as the Pacifist is alive, sober, and healthy, their ability may save the life of any executed good player, at your discretion.
+The first time a Fool would die, they do not die. You would not tell them this has happened - they would just still be alive the next morning.
+The Tinker can die any time at all, as long as they are not protected by some other ability.  This includes any time in the night, and even during the day (although usually killing them during the day isn't recommended).
+When the Moonchild learns that they have died, they must publicly choose an alive player. If that player is good, they die. Evin is good, so Evin will die.
+The first player to choose the Goon with their ability each night becomes drunk, and the Goon becomes their alignment. Because no other players have targeted the Goon tonight yet, the Goon's ability makes the Zombuul drunk (saving the Goon’s life) and turns the Goon evil.
+The Lunatic thinks they are a Demon, but are not. A Lunatic’s ability cannot actually kill anyone. The Demon also knows who they are, and who they choose at night.
+If an Outsider died today, the Godfather gets to choose a player tonight - that player dies. The Lunatic is an Outsider, and they died during the day, so the Godfather gets to kill tonight.
+Once per game, at night, the Assassin may choose a player. That player dies, even if for some reason they could not. So, despite the Sailor's own ability saying they cannot die, the Assassin kills them anyway.
+When the player chosen by the Devil's Advocate is executed, they do not die.  However, you give no indication as to the reason that they did not die (the same applies to other abilities which save players from dying by execution, such as the Sailor, Pacifist and Tea Lady).
+If the Demon dies by execution (ending the game), the Mastermind’s ability instead means the game goes for 1 more day. If a player is then executed, their team loses. The Courtier is good, so the good team loses (and thus, the evil team wins).
+The first time a Zombuul dies, they live, but register as dead.
+Each night, the Pukka chooses a player to poison. Players poisoned by the Pukka die the following night.
+Each night, the Shabbaloth chooses two players: those players die. The following night, one (not both) of the players the Shabaloth chose the previous night might be regurgitated, meaning they come back to life.
+The Po may choose to attack nobody. If they do this, they must attack 3 players the following night.
+If the Demon kills the good player the Grandmother knows, the Grandmother dies too.
+When the Assassin attacks someone, that player dies, even if for some reason they could not. The Assassin ability will thus overpower the Innkeeper’s protection, killing Lachlan. However, the Grandmother only dies to their ability if the grandchild is killed by the Demon. Because Lachlan died to the Assassin, Chloe will not die.
+Each night, the Sailor chooses a player: either that player is drunk until dusk, or the Sailor is. If the Sailor is drunk, their ability cannot prevent them from dying when executed.
+When the Exorcist chooses a Demon, that Demon learns who the Exorcist is, then doesn’t wake that night to use their ability. The Chambermaid learns how many of the 2 players they chose woke tonight due to their ability. Because the Exorcist picked him, Will did not wake tonight to use his Po ability, so the Chambermaid will get a 1.
+The Po ability reads “If your last choice was no-one, choose 3 players tonight.” When the Exorcist chose the Po last night, however, the Po was prevented from waking up. The Po did not actually make a choice about who to attack last night. Because the Po did not make a choice, this is different to the Po’s ‘last choice being no-one’, so the Po will not attack 3 players.
+The Exorcist ability stops the Demon from waking up to attack a new player. The Pukka’s ability, however, kills the last player the Pukka poisoned (each night). The Pukka does not have to wake up for this to trigger - it happens automatically. So, as the ‘previously poisoned player’, the Professor  will die.
+The first player to choose the Goon with their ability each night becomes drunk until dusk. This was Steven, so Steven becomes drunk. Usually one of the two player chosen by an Innkeeper becomes drunk. In this case, however, the Goon ability makes the Innkeeper drunk before the Innkeeper can make anyone else drunk.
+The Po’s attacks happen sequentially, in the order that the Po makes them. So he will first attack the Grandmother, who is protected by the Innkeeper. Then he will kill the Innkeeper. Finally, he will kill the Exorcist, who is no longer protected by the Innkeeper because the Innkeeper is dead.
+The Gossip ability can only kill a player if the Gossip is still alive. If the Gossip dies, they lose their ability.
+Being drunk only stops a Gossip’s ability from working if the Gossip is drunk when their ability would actually do something - when it would kill a player at night. If the Gossip is drunk when they make their (true) statement, but sober when a player would die to their ability, a player dies.
+An Assassin’s ability allows them to overcome the defensive abilities of other characters, like the Sailor and Innkeeper. However, if an Assassin is drunk when they try to use their ability, their ability doesn’t work at all, and is wasted.
+The Courtier’s ability is what is making the Assassin drunk. If the Courtier is themselves poisoned, the Assassin will no longer be drunk.
+When a Minion dies by execution, the Minstrel’s ability triggers, making all other players drunk. If the Minstrel is drunk when this execution occurs, however, their ability does not trigger and does nothing, even if the Minstrel then becomes sober afterwards.
+The Minstrel ability only has an effect if a Minion dies by execution. Executing an already-dead Minion has no effect.
+The first time this Fool was executed, they were protected by the Devil’s Advocate. Because of this, that execution did not use up the Fool’s ‘extra life’. The Fool will therefore survive the second execution as well, this time due to their own ability.
+The first character to choose the Goon is the Exorcist. The Exorcist becomes drunk. The second character to choose the Goon is the Shabaloth. Because the Goon’s ability only affects the first player to choose them that night, the Goon dies to the Shabaloth ability. Evin, Lachlan and Ben have a platonic, respectful relationship.
+The Lunatic thinks they are a Demon. They wake during the first night to learn 3 good characters as bluffs (which can be in-play or not-in-play), and an appropriate number of players as their Minions. You can show them any players as their Minions.
+The Demon learns who the Lunatic is, and who the Lunatic tries to attack at night.
+The Godfather starts knowing which Outsiders are in play.
+The Zombuul only wakes to choose a player if no one died today. After being executed, Theo registers as being dead. This counts as a player dying today for the Zombuul ability, so Theo will not wake to attack a player tonight.
+If the Mastermind’s ability is activated, then a player is executed, that player’s team loses (even if that player was already dead when they were executed). However, the Mastermind ability only activates if the Demon dies by execution (ending the game). Theo’s ‘death’ would not end the game, so it doesn’t activate the Mastermind’s ability.
+The Zombuul registers as dead, but is actually alive. 3 players are still alive, so the game continues.
+The Pukka’s ability poisons a player. The following night, that player dies. Because the Fool is poisoned when they die to the Pukka’s ability, the Fool’s ability will not save them.
+Each night, the Pukka’s ‘previously poisoned player’ dies, then becomes healthy. The player that the Pukka previously poisoned is the Gossip. The Innkeeper prevents the Gossip from dying. Then, per the Pukka’s ability, the Gossip becomes healthy.
+If the Pukka poisons a player, then becomes drunk, that player will temporarily stop being affected by the Pukka. But when the Pukka sobers up, the poison resumes, and kills the player that night. In this case, the Sailor was poisoned night 1, was not poisoned night 2 (due to the Minstrel drunking the Pukka), will be poisoned again night 3, and will die that night. 
+The Clockmaker learns the number of steps from the Demon to its nearest Minion. In this case, the Fang Gu is 2 steps away from the Pit-Hag, so the Clockmaker will get a 2.
+When the Dreamer chooses a player, they learn a good and an evil character, one of which is correct. In this case, the Dreamer has chosen the Barber. They will learn Barber (correct), and an evil character (incorrect).
+If the Snake Charmer chooses the Demon, the two players swap characters and alignments, and the former Demon is then poisoned. In this case, the good Snake Charmer becomes the evil Fang Gu, and the evil Fang Gu becomes the good, poisoned Snake Charmer.
+The Mathematician learns how many players’ abilities worked abnormally since dawn due to another character’s ability. In this case, the Clockmaker got false information, so their ability worked abnormally. Despite being poisoned, the Seamstress got true information, so their ability worked normally. So, the Mathematician would get a 1.
+The Flowergirl learns if the Demon voted today. In this case, the Demon did vote today.
+The Town Crier learns if a Minion nominated today. In this case, the Artist (a Townsfolk), Vigormortis (a Demon) and Mutant (an Outsider) nominated today. None of those characters are Minions, so the Town Crier will learn a no.
+Each night, the Oracle learns how many dead players are evil. In this case, there are two dead evil players - Will the Cerenovus and Lachlan the Pit-Hag.
+Each day, the Savant may visit the Storyteller to learn two things: one is true, and one is false. In this case, it is true that there is a Vigormortis in play, and false that there is a Fang Gu in play.
+Once per game, the Seamstress may choose two players and learn if they are the same alignment. In this case, Patrick has chosen the evil Fang Gu and the good Juggler, so will learn no - they are not the same alignment. Don’t steal Patrick’s wallet, as that is not covered by the rules, and is immoral.
+Once per game, at night, the Philosopher may choose a good character and gain that character’s ability. As an unfortunate side effect, if that character is already in-play, they become drunk. In this case, the Philosopher chose the Artist, which makes Lachlan (the actual Artist) drunk.
+Once per game, the Artist can ask the Storyteller a yes or no question. In this case, Jon is the Evil Twin, so the Artist will get a yes. Storytellers should not freak out on their players without good reason.
+On their first day, the Juggler can publicly guess up to 5 players' characters. That night, they learn how many of those guesses were correct. In this case, 2/4 of the Juggler’s guesses were correct, so they will learn a 2.
+When the Demon kills the Sage, the Sage learns the Demon is 1 of 2 players. In this case, the Sage would learn Steven and one other player.
+If the Mutant is mad about being an Outsider, they might be executed. A Mutant publicly claiming that they are the Mutant counts as being mad as an Outsider. A Mutant execution will immediately end the day.
+When the Sweetheart dies, another player is made drunk for the rest of the game. In this case, Patrick has been made drunk.
+After the Barber dies, the Demon is given the opportunity to choose two players. Those two players swap characters. 
+When the Klutz learns that they have died, they must publicly choose a player. If the player they choose is evil, the Klutz’s team immediately loses. In this case, they chose Amy the evil Vortox, so evil wins.
+If the good twin is executed while the evil twin lives, the evil team wins.
+Each night, the Witch chooses a player. If that player nominates tomorrow, they die on the spot. This does not end the day.
+Each night, the Cerenovus chooses a player and a good character. That player learns that the Cerenovus has selected them, and the character they selected. If they are not mad as that character tomorrow, they might be executed, which immediately ends the day. In this case, Reggie did not pretend to be the Clockmaker, so might be executed.
+At night, the Pit-Hag must choose a player and a character. If that character is not already in-play, the chosen player becomes that character. In this case, because there is no Mutant already in-play, Jams becomes the Mutant
+The first time an Outsider would be killed by a Fang Gu, the Outsider becomes an evil Fang Gu instead, and the attacking Fang Gu dies. In this case, Jon is the first Outsider that a Fang Gu has attacked, so Jon becomes an evil Fang Gu instead.
+In addition to poisoning a Townsfolk neighbour, Minions killed by the Vigormortis keep their ability. As such, despite being dead, Ben the Pit-Hag can keep using his ability as normal. He will not die in real life, because this is just a board game.
+The No Dashii poisons its 2 Townsfolk neighbours. In this case, the closest Townsfolk on either side are Reggie the dead Flowergirl and Ben the alive Philosopher.
+The Vortox ability means that all Townsfolk abilities give false information. Theo is the Demon, so you must tell the Artist false information.
+The Vortox ability means that Townsfolk abilities must yield false information. However, the Dreamer ability also requires that the Dreamer must learn a good and an evil character. So in this case, the Dreamer must learn a good and an evil character, neither of which are actually Will’s character (meaning, the Sage cannot be one of the two characters the Dreamer learns).
+Usually, a drunk Dreamer could learn true or false information. However, the Vortox ability means that Townsfolk abilities must yield only false information. This trumps drunkeness, so the Dreamer must learn 2 characters that Steffen is not.
+The Vortox ability does not prevent the Snake Charmer ability from working.
+If a Snake Charmer swaps characters & alignment with the Demon via its ability, the new Snake Charmer is poisoned. This means its ability does not work, and selecting the new Demon does nothing.
+When a player becomes a character, they enter play as a ‘new’ version of that character. All abilities are refreshed. If a Snake Charmer (poisoned by their own ability) swaps with someone else, the new Snake Charmer will not be poisoned.
+If the Snake Charmer chooses the Demon, the two players swap character & alignment. In this case, because both Chloe and Lachlan are evil, they remain evil and just swap characters.
+The Town Crier learns if a Minion nominated today. While Will was the Pit-Hag, he nominated. The Town Crier ability tracks what happened during the day, so Jon will get a yes.
+Due to the Vortox ability, the Savant must learn two statements that are false.
+Once a Philosopher dies, their ability goes away. If they were making a good character drunk, they stop making that character drunk. In this case, Ben dying means that Lachlan the Artist is no longer drunk.
+The Juggler ability is: ""On your 1st day, publicly guess up to 5 players' characters. That night, you learn how many you got correct."" ‘Your 1st day’ means the first day that the Juggler was in-play, not the first day of the game. So, Steffen will receive information.
+The Evil Twin and the good twin know who each other are, and what each others’ characters are. On the first night, they wake up together.
+Executing the good twin only loses the game for the good team while the Evil Twin is still alive. If the Evil Twin is already dead when the good twin is executed, nothing happens.
+While both twins are alive, the good team cannot win. If the only living players are the two twins, the game ends and evil wins. For this reason, the good team must deal with the twins earlier in the game - a final 3 consisting of only the twins and the Demon is an automatic loss for the good team.
+The No Dashii poisons its closest Townsfolk neighbours. If Reggie becomes the Witch (a Minion), the next-closest anticlockwise Townsfolk neighbour of the No Dashii (Ben the Sage) will become poisoned instead.
+The Evil Twin always learns an opposing player & their character. If a good Evil Twin is created, they will wake up with & learn the character of an evil player.
+If the good player in a twin pair is executed, evil wins. In this case, Reggie is the good player (the good Evil Twin). Therefore, Reggie being executed means that evil wins.
+The Evil Twin must always be paired with an opposing player. If the good player the Evil Twin is paired up with turns evil, the Evil Twin gets paired up with a new good player. So in this case, Steffen and Amy stop being a twin pair, and Steffen gets paired up with someone else. 
+Dead players like Edd may still be affected by the Cerenovus, and can still be executed for breaking madness. This can be quite useful - a dead player being executed ends the day and prevents the town from executing a living player that day. However, if the Cerenovus dies, the Cerenovus ability is no longer in play, so it cannot cause a player to be executed. The player that was affected by the Cerenovus that night is not told that the Cerenovus is dead, however. 
+In this case, there is already a Sweetheart in-play. As such, Ben’s character will not change.
+If a Pit-Hag turns a player into a Demon, deaths that night are arbitrary. This means they are decided by the Storyteller, and any number of players can die. If the Pit-Hag tries to create two living evil Demons, Storytellers will usually use the Pit-Hag ability to kill one of them.
+Only one Outsider may be converted into an evil Fang Gu. After this has happened, subsequent Outsiders who are attacked by a Fang Gu die as normal.
+When the Vigormortis kills a Minion, one of that Minion’s Townsfolk neighbours becomes poisoned. A Townsfolk neighbour is the closest Townsfolk on either side. In this case, Patrick’s Townsfolk neighbours are Steffen and Amy, so either could be poisoned.
+When players change characters, any effects that their characters were previously causing end. The Vigormortis and Witch swapping characters means that effects that were generated by the old Vigormortis, such as the Pit-Hag retaining their ability after death, end.
+The Vortox ability means that if there is ever a day where no one is executed, the evil team instantly wins.
+Two players’ abilities functioned abnormally (since dawn) due to another character’s ability. The Klutz picked an evil player, but did not make the good team lose, because they were drunk. The Dreamer learned 2 false characters, due to the Vortox. The Snake Charmer ability didn’t trigger despite them picking the Demon, but this will not register to the Mathematician. This is because the Snake Charmer was poisoned due to their own ability, not the ability of another character. So the correct number is 2. However, due to the Vortox, the Mathematician must learn false information, so will learn any number but a 2.
+The Washerwoman has seen the Empath and the Spy players. Because the Spy can register as a Townsfolk, the Washerwoman could learn any Townsfolk character.
+Steven is the Drunk who thinks he is the Librarian. As such, you can show him any 2 players, and any Outsider.
+The Recluse can register as a Minion. That means, in this case, the Investigator could learn that Jams or another player is the Scarlet Woman (or any Minion you choose).
+The Recluse can register as evil. The Spy can register as good. Both are sitting next to the Imp. So the Chef can learn a 0 (if both Recluse & Spy register as good), a 1 (if one registers as evil), or a 2 (if both register as evil).
+There is one good player who registers as the Demon to the Fortune Teller. In this case, that player is Edd, so the Fortune Teller will get a yes.
+If an Imp kills themselves with their own ability, a Minion becomes the Imp.
+When a Monk chooses someone, that player is safe from the Demon tonight. This includes preventing a Demon from dying to their own ability. A Minion only becomes the Imp if the Imp kills themselves with their own ability - so nothing happens.
+Normally, the Recluse could register as the Recluse, any Minion, or the Imp, all of which you could show to Ben. In this case, however, the Recluse is poisoned, so you could only show Ben the Recluse.
+If a Townsfolk nominates the Virgin, the Townsfolk player is executed. The Spy might register as a Townsfolk, so Steffen may or may not be executed.
+The Recluse can register as the Demon, meaning they might die to the Slayer’s ability. This death is not an execution, and will not bring an end to the day.
+If the Mayor dies at night, another player might die instead. In such a situation, the Imp’s attack would effectively be redirected. The only player that this cannot kill is Patrick. Patrick is the Soldier, and the Soldier is safe from the Demon.
+If the Mayor dies at night, the Storyteller can decide that another player dies instead - redirecting the Imp’s attack. In this case, the Imp’s attack has been redirected to Patrick, who is the Soldier. Because the Soldier is safe from the Demon, no players will die to the Imp’s attack.
+The Mayor’s ability can redirect the Imp’s own attack back at them. If the Imp dies to their own ability this way, a Minion becomes the Imp.
+The Butler cannot vote unless their Master is voting. Sometimes, they may accidentally do so anyway. This is unfortunate, but in most cases, it is better to just let the vote be counted (and privately remind them later that they must follow the restrictions of their ability). Publicly altering the vote tally would confirm that Lachlan is the Butler, which would be excellent for the good team, and not a great outcome for game balance.
+If the Drunk is poisoned, nothing changes for them. A poisoned Drunk functions exactly the same as a non-poisoned Drunk. They do not learn that they are the Drunk.
+The Drunk thinks they are a Townsfolk, but they are actually the Drunk. Abilities that detect a player's character, such as the Undertaker, will learn that the Drunk is the Drunk, not that they are the character they think they are.
+The character the Recluse is registering as can change. They could register as a Minion or Demons to one player’s ability, a different Minion or Demon  to another player, and then actually register as the Recluse to someone else.
+When a player changes character, they do not retain the abilities of the character they were before. If Lachlan becomes the Imp, the Poisoner ability will no longer be in-play, and Steven will no longer be poisoned.
+If there are 5 or more players alive when the Demon dies, the Scarlet Woman becomes the Demon. This still triggers if the Demon dies when there are exactly 5 players alive - the Scarlet Woman instantly becomes the Demon. Ben Dance is not in a coma, please do not suggest this to him.
+The Imp must choose a player with their ability each night.
+The Imp may target a dead player with their ability. If they do, no players will die to the Demon tonight.
