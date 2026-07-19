@@ -347,7 +347,9 @@ minetest.register_chatcommand("home_deco_verify", {
         local main_nodes = get_node_list(nil)
         local material_covered = {}
         for _, entry in ipairs(main_nodes) do
-            record(entry.name)
+            if not is_shape_variant(entry.name) then
+                record(entry.name)  -- only recorded once (no variant page)
+            end
             material_covered[extract_material(entry.name)] = true
         end
         log("Main view: " .. #main_nodes .. " items (" .. #main_nodes .. " materials)")
