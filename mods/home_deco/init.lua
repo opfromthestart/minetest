@@ -318,7 +318,6 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
-        -- Step 1: build main view, logging duplicates/unexpected as found
         log("Building main view...")
         local main_nodes = get_node_list(nil)
         for _, entry in ipairs(main_nodes) do
@@ -326,34 +325,47 @@ minetest.register_chatcommand("home_deco_verify", {
         end
         log("Main view: " .. #main_nodes .. " items")
 
-        -- Step 2: build variant pages, logging as found
+        -- Pre-index: one pass over all registered nodes to group shape
+        -- variants by material, avoiding O(n) rescans per material.
+        log("Indexing shape variants...")
+        local mat_index = {}
+        for node_name, def in pairs(minetest.registered_nodes) do
+            if not home_deco._banned[node_name] then
+                local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
+                if not hidden and is_shape_variant(node_name) then
+                    local mat = extract_material(node_name)
+                    local list = mat_index[mat]
+                    if not list then
+                        list = {}
+                        mat_index[mat] = list
+                    end
+                    table.insert(list, node_name)
+                end
+            end
+        end
+
+        -- Step 2: walk reachable variant pages from the index
         local materials = {}
         for _, entry in ipairs(main_nodes) do
             materials[extract_material(entry.name)] = true
         end
         local material_count = 0
         for _ in pairs(materials) do material_count = material_count + 1 end
-        log("Building " .. material_count .. " variant pages...")
-        local prog = 0
+        log("Building " .. material_count .. " variant pages (from index)...")
         for material in pairs(materials) do
-            local nodes = get_node_list(material)
-            for _, entry in ipairs(nodes) do
-                record(entry.name)
-            end
-            prog = prog + 1
-            if prog % 100 == 0 then
-                log("... " .. prog .. "/" .. material_count)
+            local nodes = mat_index[material]
+            if nodes then
+                for _, node_name in ipairs(nodes) do
+                    record(node_name)
+                end
             end
             if #duplicated + #unexpected >= CAP then
-                log("Stopping variant scan: " .. (#duplicated + #unexpected) .. " issues found, skipping " .. (material_count - prog) .. " remaining materials")
+                log("Stopping variant scan: " .. (#duplicated + #unexpected) .. " issues found so far")
                 break
             end
         end
-        if material_count > 0 and prog % 100 ~= 0 and #duplicated + #unexpected < CAP then
-            log("... " .. prog .. "/" .. material_count)
-        end
 
-        -- Step 3: scan for missing (requires full expected set)
+        -- Step 3: scan for missing
         log("Checking for missing nodes...")
         local expected_count = 0
         local missing_scan_complete = true
