@@ -24,7 +24,7 @@ local function raycast_player(user)
     return nil
 end
 
-local QUICK_MARKERS = { "POISONED", "DRUNK", "PROTECTED", "FALSE INFO", "RED HERRING", "DEAD" }
+local QUICK_MARKERS = { "POISONED", "DRUNK", "PROTECTED", "FALSE INFO", "RED HERRING", "DEAD", "VISIT", "CHOSEN", "SEEN", "WRONG", "GRANDCHILD", "DREAM", "CHANGED", "MAD", "CURSED", "TWIN", "SWAPPED", "JUMP" }
 
 function botc.show_marker_formspec(viewer, target)
     local data = botc.ST.roles[target]
@@ -37,11 +37,30 @@ function botc.show_marker_formspec(viewer, target)
         fs = fs .. "button[" .. (0.5 + x * 2.5) .. "," .. (y + row * 1) .. ";2.3,0.8;marker_" .. m .. ";" .. m .. "]"
     end
     fs = fs .. "button[0.5,3.5;2.3,0.8;marker_clear;CLEAR]"
-    fs = fs .. "field[0.5,4.7;7,0.8;mad_as;MAD AS;]"
-    fs = fs .. "button[3,4.7;2,0.8;marker_mad_as;Set MAD]"
-    fs = fs .. "field[0.5,5.9;7,0.8;custom_marker;Custom;]"
-    fs = fs .. "button[3,5.9;2,0.8;marker_custom;Set Custom]"
-    fs = fs .. "button_exit[2,6.7;3,0.8;close;Close]"
+    local meta_steps = botc.get_meta_steps(botc.ST.current_day)
+    if #meta_steps > 0 then
+        fs = fs .. "label[0.5,4.5;Night Steps:]"
+        local done = botc.ST.meta_steps_done or {}
+        for i, step in ipairs(meta_steps) do
+            local prefix = done[step] and "\226\156\148" or "\226\151\162"
+            local label = prefix .. " " .. step
+            local x = 0.5 + ((i - 1) % 3) * 2.5
+            local y = 5.1 + math.floor((i - 1) / 3) * 0.8
+            fs = fs .. "button[" .. x .. "," .. y .. ";2.3,0.8;meta_" .. step .. ";" .. label .. "]"
+        end
+        local steps_end_y = 5.1 + math.ceil(#meta_steps / 3) * 0.8
+        fs = fs .. "field[0.5," .. (steps_end_y + 0.3) .. ";7,0.8;mad_as;MAD AS;]"
+        fs = fs .. "button[3," .. (steps_end_y + 0.3) .. ";2,0.8;marker_mad_as;Set MAD]"
+        fs = fs .. "field[0.5," .. (steps_end_y + 1.5) .. ";7,0.8;custom_marker;Custom;]"
+        fs = fs .. "button[3," .. (steps_end_y + 1.5) .. ";2,0.8;marker_custom;Set Custom]"
+        fs = fs .. "button_exit[2," .. (steps_end_y + 2.3) .. ";3,0.8;close;Close]"
+    else
+        fs = fs .. "field[0.5,4.7;7,0.8;mad_as;MAD AS;]"
+        fs = fs .. "button[3,4.7;2,0.8;marker_mad_as;Set MAD]"
+        fs = fs .. "field[0.5,5.9;7,0.8;custom_marker;Custom;]"
+        fs = fs .. "button[3,5.9;2,0.8;marker_custom;Set Custom]"
+        fs = fs .. "button_exit[2,6.7;3,0.8;close;Close]"
+    end
     minetest.show_formspec(viewer, "botc_storyteller:marker_" .. target, fs)
 end
 
@@ -843,6 +862,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             end
             botc.show_marker_formspec(name, target)
             return true
+        end
+
+        for _, step in ipairs(botc.get_meta_steps(botc.ST.current_day)) do
+            if fields["meta_" .. step] then
+                if botc.ST.meta_steps_done[step] then
+                    botc.ST.meta_steps_done[step] = nil
+                else
+                    botc.ST.meta_steps_done[step] = true
+                end
+                botc.save_state()
+                botc.show_marker_formspec(name, target)
+                return true
+            end
         end
         return true
     end
