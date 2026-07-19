@@ -375,25 +375,29 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
-        -- Step 3: scan for missing (non-shape-variant nodes only;
-        -- shape variants whose material has no main-view entry are
-        -- unreachable, not bugs. Also: if two non-shape-variant nodes
-        -- share a material (e.g. wool:white and default:white), only
-        -- one representative appears in the menu — the material is
-        -- covered.  The other is not "missing".)
+        -- Step 3: scan for missing.  A shape variant whose material does
+        -- not have a main-view entry is unreachable.  A non-shape-variant
+        -- node that shares its material with a shorter main-view
+        -- representative is intentionally deduplicated (not missing).
         log("Checking for missing nodes...")
         local expected_count = 0
         local missing_scan_complete = true
         for node_name, def in pairs(minetest.registered_nodes) do
             local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
             if not hidden and not home_deco._banned[node_name] then
-                if not is_shape_variant(node_name) then
-                    expected_count = expected_count + 1
-                    local mat = extract_material(node_name)
-                    if not material_covered[mat] then
+                expected_count = expected_count + 1
+                if not occurrences[node_name] then
+                    local is_missing = true
+                    if not is_shape_variant(node_name) then
+                        local mat = extract_material(node_name)
+                        if material_covered[mat] then
+                            is_missing = false  -- deduplicated, not missing
+                        end
+                    end
+                    if is_missing then
                         if #missing < CAP then
                             table.insert(missing, node_name)
-                            log("MISSING (no main entry for material '" .. mat .. "'): " .. node_name)
+                            log("MISSING: " .. node_name)
                         end
                         if #missing >= CAP then
                             missing_scan_complete = false
