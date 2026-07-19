@@ -72,10 +72,10 @@ AppDir
 !/textures/base/
 /screenshots
 /sounds
-/mods/*
-!/mods/mods_here.txt
-!/mods/botc_storyteller/
-!/mods/home_deco/
+/mods/carpet/
+/mods/flowerpot/
+/mods/flowers/
+/mods/hardenedclay/
 /worlds/*
 !/worlds/worlds_here.txt
 /clientmods/*
