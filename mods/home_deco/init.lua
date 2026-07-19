@@ -269,11 +269,9 @@ local function get_node_list(base_name)
             local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
             if not is_hidden then
                 if base_name then
-                    if is_shape_variant(name) then
-                        local mat = extract_material(name)
-                        if mat == base_name then
-                            table.insert(nodes, {name = name, desc = def.description or name})
-                        end
+                    local mat = extract_material(name)
+                    if mat == base_name then
+                        table.insert(nodes, {name = name, desc = def.description or name})
                     end
                 else
                     if is_shape_variant(name) then
@@ -308,6 +306,39 @@ local function get_node_list(base_name)
     table.sort(nodes, function(a, b) return a.desc:lower() < b.desc:lower() end)
     return nodes
 end
+
+minetest.register_chatcommand("home_deco_dump", {
+    params = "<material>",
+    description = "Dump variant page contents for a material",
+    privs = {server = true},
+    func = function(name, param)
+        local mat = param:trim()
+        if mat == "" then return false, "Usage: /home_deco_dump <material>" end
+        local nodes = get_node_list(mat)
+        local lines = {"Variant page for '" .. mat .. "': " .. #nodes .. " items"}
+        for _, n in ipairs(nodes) do
+            table.insert(lines, "  " .. n.name .. " desc=" .. n.desc)
+        end
+        minetest.log("action", table.concat(lines, "\n"))
+        return true, #nodes .. " items logged to server console"
+    end,
+})
+
+minetest.register_chatcommand("home_deco_material", {
+    params = "<node_name>",
+    description = "Show extract_material result for a node",
+    privs = {server = true},
+    func = function(name, param)
+        param = param:trim()
+        if param == "" then return false, "Usage: /home_deco_material <node_name>" end
+        if not minetest.registered_nodes[param] then
+            return false, "Node not registered: " .. param
+        end
+        local mat = extract_material(param)
+        local shape = is_shape_variant(param) and "YES" or "NO"
+        return true, param .. " → material=" .. mat .. " shape=" .. shape
+    end,
+})
 
 minetest.register_chatcommand("home_deco_verify", {
     params = "",
@@ -347,9 +378,6 @@ minetest.register_chatcommand("home_deco_verify", {
         local main_nodes = get_node_list(nil)
         local material_covered = {}
         for _, entry in ipairs(main_nodes) do
-            if not is_shape_variant(entry.name) then
-                record(entry.name)  -- only recorded once (no variant page)
-            end
             material_covered[extract_material(entry.name)] = true
         end
         log("Main view: " .. #main_nodes .. " items (" .. #main_nodes .. " materials)")
@@ -536,6 +564,9 @@ local function build_deco_formspec(player, context)
     end
 
     if #nodes == 0 then
+        if variant then
+            minetest.log("warning", "[home_deco] Empty variant page for material '" .. variant .. "'")
+        end
         fs = fs .. "label[0," .. y_offset .. ";No items to show.]"
         return fs
     end
