@@ -289,11 +289,12 @@ minetest.register_chatcommand("home_deco_verify", {
     description = "Verify every node appears in exactly one menu (main or variant)",
     privs = {server = true},
     func = function(name, param)
-        -- Exercise the real menu-building function (get_node_list) exactly
-        -- the way the formspec does, instead of re-deriving a parallel
-        -- classification. This catches actual duplicate/missing entries
-        -- caused by bugs in get_node_list/extract_material, not just
-        -- disagreements with a second implementation of the same logic.
+        local player = minetest.get_player_by_name(name)
+        if not player then return false, "Player not found" end
+        local function say(msg)
+            minetest.chat_send_player(name, msg)
+        end
+
         local occurrences = {}
         local function record(node_list)
             for _, entry in ipairs(node_list) do
@@ -301,13 +302,13 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
+        -- Step 1: build main view
+        say("[home_deco] Building main view...")
         local main_nodes = get_node_list(nil)
         record(main_nodes)
+        say("[home_deco] Main view: " .. #main_nodes .. " items")
 
-        -- A variant page is only reachable by clicking a main-view item,
-        -- which opens home_deco._deco_variant[name] = extract_material(item).
-        -- So the full set of reachable materials is exactly the materials
-        -- of main-view items.
+        -- Step 2: build variant pages for each reachable material
         local materials = {}
         local material_count = 0
         for _, entry in ipairs(main_nodes) do
@@ -317,12 +318,21 @@ minetest.register_chatcommand("home_deco_verify", {
                 material_count = material_count + 1
             end
         end
+        say("[home_deco] Building " .. material_count .. " variant pages...")
+        local prog = 0
         for material in pairs(materials) do
             record(get_node_list(material))
+            prog = prog + 1
+            if prog % 100 == 0 then
+                say("[home_deco] ... " .. prog .. "/" .. material_count)
+            end
+        end
+        if material_count > 0 and prog % 100 ~= 0 then
+            say("[home_deco] ... " .. prog .. "/" .. material_count)
         end
 
-        -- Expected: every registered node that isn't hidden from creative
-        -- inventory and isn't banned should be reachable exactly once.
+        -- Step 3: build expected set
+        say("[home_deco] Checking results...")
         local expected = {}
         local expected_count = 0
         for node_name, def in pairs(minetest.registered_nodes) do
@@ -333,42 +343,67 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
+        -- Step 4: classify, stopping each list at a visible cap
+        local CAP = 30
         local missing, duplicated, unexpected = {}, {}, {}
         for node_name in pairs(expected) do
             local count = occurrences[node_name] or 0
             if count == 0 then
-                table.insert(missing, node_name)
+                if #missing < CAP then table.insert(missing, node_name) end
+                missing.overflow = (missing.overflow or 0) + 1
             elseif count > 1 then
-                table.insert(duplicated, node_name .. " (x" .. count .. ")")
+                if #duplicated < CAP then table.insert(duplicated, node_name .. " (x" .. count .. ")") end
+                duplicated.overflow = (duplicated.overflow or 0) + 1
             end
         end
         for node_name in pairs(occurrences) do
             if not expected[node_name] then
-                table.insert(unexpected, node_name)
+                if #unexpected < CAP then table.insert(unexpected, node_name) end
+                unexpected.overflow = (unexpected.overflow or 0) + 1
             end
         end
         table.sort(missing)
         table.sort(duplicated)
         table.sort(unexpected)
 
-        local report = {}
-        table.insert(report, "Expected reachable nodes: " .. expected_count)
-        table.insert(report, "Main view: " .. #main_nodes)
-        table.insert(report, "Variant pages: " .. material_count .. " materials")
+        -- Step 5: report
+        say("Summary: expected=" .. expected_count .. " main=" .. #main_nodes .. " variant_materials=" .. material_count)
+
         if #missing == 0 and #duplicated == 0 and #unexpected == 0 then
-            table.insert(report, "OK: every node appears in exactly one menu")
-        else
+            say("OK: every node appears in exactly one menu")
+            return true
+        end
+
+        if #missing > 0 then
+            local tail = missing.overflow > CAP and (" + " .. (missing.overflow - CAP) .. " more (logged)") or ""
+            say("MISSING: " .. (missing.overflow) .. " total, showing first " .. #missing .. tail)
             if #missing > 0 then
-                table.insert(report, "MISSING from every menu (" .. #missing .. "): " .. table.concat(missing, ", "))
-            end
-            if #duplicated > 0 then
-                table.insert(report, "DUPLICATED across menus (" .. #duplicated .. "): " .. table.concat(duplicated, ", "))
-            end
-            if #unexpected > 0 then
-                table.insert(report, "UNEXPECTED (hidden/banned but shown) (" .. #unexpected .. "): " .. table.concat(unexpected, ", "))
+                say("  " .. table.concat(missing, ", "))
             end
         end
-        return true, table.concat(report, "\n")
+        if #duplicated > 0 then
+            local tail = duplicated.overflow > CAP and (" + " .. (duplicated.overflow - CAP) .. " more (logged)") or ""
+            say("DUPLICATED: " .. (duplicated.overflow) .. " total, showing first " .. #duplicated .. tail)
+            if #duplicated > 0 then
+                say("  " .. table.concat(duplicated, ", "))
+            end
+        end
+        if #unexpected > 0 then
+            local tail = unexpected.overflow > CAP and (" + " .. (unexpected.overflow - CAP) .. " more (logged)") or ""
+            say("UNEXPECTED: " .. (unexpected.overflow) .. " total, showing first " .. #unexpected .. tail)
+            if #unexpected > 0 then
+                say("  " .. table.concat(unexpected, ", "))
+            end
+        end
+
+        -- Always log full details for server logs
+        minetest.log("action", "[home_deco] VERIFY "
+            .. "expected=" .. expected_count
+            .. " missing=" .. (missing.overflow or 0)
+            .. " duplicated=" .. (duplicated.overflow or 0)
+            .. " unexpected=" .. (unexpected.overflow or 0))
+
+        return true, "See above for details (full list logged to console)"
     end,
 })
 
