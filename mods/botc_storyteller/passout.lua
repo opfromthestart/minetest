@@ -92,10 +92,10 @@ local REQUIRED_TOKENS = {
 function botc.normalize_role_id(entry)
     local id = type(entry) == "table" and entry.id or entry
     if type(entry) == "table" and entry.name then
-        return entry.name:lower():gsub("[ -]", "_")
+        return entry.name:lower():gsub("[' -]", "_")
     end
     id = type(entry) == "table" and (entry.id or "unknown") or entry
-    return id:lower():gsub("[ -]", "_")
+    return id:lower():gsub("[' -]", "_")
 end
 
 function botc.get_night_order_roles(day)

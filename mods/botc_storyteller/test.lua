@@ -260,6 +260,8 @@ function reset_state()
     dofile("/home/opfromthestart/.minetest/worlds/botc_world/worldmods/botc_storyteller/voting.lua")
     dofile("/home/opfromthestart/.minetest/worlds/botc_world/worldmods/botc_storyteller/commands.lua")
     botc.load_state()
+    botc.ST.script_meta = nil
+    botc.ST.meta_steps_done = {}
 end
 
 function section(title)
@@ -1627,6 +1629,83 @@ botc.ST.bag["imp"] = 1
 ok, msg = botc.passout_from_bag()
 assert_false(ok, "no players fails")
 assert_true(msg:find("No players"), "no players error")
+
+-- ============================================================
+section("28. Night Order Roles")
+-- ============================================================
+reset_state()
+botc.ST.script_meta = {
+    firstNight = {"dusk", "minioninfo", "lunatic", "demoninfo", "sailor", "grandmother", "dawn"},
+    otherNight = {"dusk", "sailor", "innkeeper", "gossip", "dawn"},
+}
+local roles = botc.get_night_order_roles(1)
+assert_true(#roles == 3, "firstNight roles (excluding meta)")
+assert_true(roles[1] == "lunatic", "first role is lunatic")
+assert_true(roles[3] == "grandmother", "last role is grandmother")
+local roles2 = botc.get_night_order_roles(2)
+assert_true(#roles2 == 3, "otherNight roles (excluding meta)")
+assert_true(roles2[1] == "sailor", "day2 first role is sailor")
+
+-- ============================================================
+section("29. Meta Steps")
+-- ============================================================
+local meta = botc.get_meta_steps(1)
+assert_true(#meta == 4, "4 meta steps on firstNight")
+assert_true(meta[1] == "dusk", "first meta step is dusk")
+assert_true(meta[4] == "dawn", "last meta step is dawn")
+local meta2 = botc.get_meta_steps(2)
+assert_true(#meta2 == 2, "2 meta steps on otherNight")
+
+-- ============================================================
+section("30. Normalize Role ID")
+-- ============================================================
+assert_eq(botc.normalize_role_id("Snake Charmer"), "snake_charmer", "normalize with space")
+assert_eq(botc.normalize_role_id("SNAKE_CHARMER"), "snake_charmer", "normalize uppercase")
+assert_eq(botc.normalize_role_id({id="snakecharmer"}), "snakecharmer", "normalize table with id")
+assert_eq(botc.normalize_role_id({id="devilsadvocate", name="Devil's Advocate"}), "devil_s_advocate", "normalize table with name")
+
+-- ============================================================
+section("31. Required Tokens Check")
+-- ============================================================
+reset_state()
+botc.ST.roles["Alice"] = {role="Poisoner", team="minion", alive=true, markers={}}
+botc.ST.roles["Bob"] = {role="Sailor", team="townsfolk", alive=true, markers={}}
+local missing = botc.check_required_tokens()
+assert_true(missing ~= nil, "missing tokens when none placed")
+local need_poisoned = false
+local need_drunk = false
+for _, m in ipairs(missing) do
+    if m.token == "POISONED" then need_poisoned = true end
+    if m.token == "DRUNK" then need_drunk = true end
+end
+assert_true(need_poisoned, "POISONED token needed")
+assert_true(need_drunk, "DRUNK token needed")
+botc.ST.roles["Alice"].markers = {"POISONED"}
+botc.ST.roles["Bob"].markers = {"DRUNK"}
+missing = botc.check_required_tokens()
+assert_true(missing == nil, "all tokens present returns nil")
+botc.ST.roles["Charlie"] = {role="Innkeeper", team="townsfolk", alive=true, markers={}}
+missing = botc.check_required_tokens()
+assert_true(missing ~= nil, "shortfall when 2 DRUNK needed, only 1 present")
+local drunk_missing = false
+for _, m in ipairs(missing) do
+    if m.token == "DRUNK" then
+        drunk_missing = true
+        assert_eq(m.needed, 2, "need 2 DRUNK")
+        assert_eq(m.have, 1, "have 1 DRUNK")
+    end
+end
+assert_true(drunk_missing, "DRUNK reported as short")
+
+-- ============================================================
+section("32. No Meta Steps When No Script")
+-- ============================================================
+reset_state()
+botc.ST.script_meta = nil
+local roles = botc.get_night_order_roles(1)
+assert_eq(#roles, 0, "no roles when no meta")
+local meta = botc.get_meta_steps(1)
+assert_eq(#meta, 0, "no meta steps when no meta")
 
 -- ============================================================
 print(string.format("\n========================================"))
