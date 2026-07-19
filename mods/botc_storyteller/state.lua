@@ -20,6 +20,8 @@ botc.ST = {
     current_timeofday = 0.0,
     player_notes = {},    -- { [author] = { [target] = "text" } }
     bag = {},             -- { [role_id] = count, ... } — custom role bag
+    script_meta = nil,     -- { firstNight = {...}, otherNight = {...} } from _meta
+    meta_steps_done = {},  -- { [step] = true } -- which meta steps ST has completed
     face_down = {},       -- { [role_id] = true } — roles hidden from players
     nomination_votes = {},-- { [nominee] = yes_count } — votes for current day
     timer_active = false,
