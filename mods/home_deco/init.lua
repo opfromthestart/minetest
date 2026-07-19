@@ -262,16 +262,12 @@ end
 
 local function get_node_list(base_name)
     local nodes = {}
+    local best_per_material = {}  -- used only for main view (base_name == nil)
     for name, def in pairs(minetest.registered_nodes) do
         if not home_deco._banned[name] then
             local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
             if not is_hidden then
                 if base_name then
-                    -- Exact material match only: clicking "wood" shows stair_wood,
-                    -- slab_wood, etc. but NOT wood_tile or wood_tile_center (those
-                    -- are separate style families - click them directly). Only
-                    -- shape variants belong here; the base item itself is already
-                    -- shown in the main view.
                     if is_shape_variant(name) then
                         local mat = extract_material(name)
                         if mat == base_name then
@@ -280,10 +276,20 @@ local function get_node_list(base_name)
                     end
                 else
                     if not is_shape_variant(name) then
-                        table.insert(nodes, {name = name, desc = def.description or name})
+                        local mat = extract_material(name)
+                        local existing = best_per_material[mat]
+                        if not existing or #name < #existing.name then
+                            best_per_material[mat] = {name = name, desc = def.description or name}
+                        end
                     end
                 end
             end
+        end
+    end
+    if not base_name then
+        -- Flatten deduplicated material groups into node list
+        for _, entry in pairs(best_per_material) do
+            table.insert(nodes, entry)
         end
     end
     table.sort(nodes, function(a, b) return a.desc:lower() < b.desc:lower() end)
@@ -326,10 +332,12 @@ minetest.register_chatcommand("home_deco_verify", {
 
         log("Building main view...")
         local main_nodes = get_node_list(nil)
+        local material_covered = {}
         for _, entry in ipairs(main_nodes) do
             record(entry.name)
+            material_covered[extract_material(entry.name)] = true
         end
-        log("Main view: " .. #main_nodes .. " items")
+        log("Main view: " .. #main_nodes .. " items (" .. #main_nodes .. " materials)")
 
         -- Pre-index: one pass over all registered nodes to group shape
         -- variants by material, avoiding O(n) rescans per material.
@@ -351,14 +359,10 @@ minetest.register_chatcommand("home_deco_verify", {
         end
 
         -- Step 2: walk reachable variant pages from the index
-        local materials = {}
-        for _, entry in ipairs(main_nodes) do
-            materials[extract_material(entry.name)] = true
-        end
         local material_count = 0
-        for _ in pairs(materials) do material_count = material_count + 1 end
+        for _ in pairs(material_covered) do material_count = material_count + 1 end
         log("Building " .. material_count .. " variant pages (from index)...")
-        for material in pairs(materials) do
+        for material in pairs(material_covered) do
             local nodes = mat_index[material]
             if nodes then
                 for _, node_name in ipairs(nodes) do
@@ -371,22 +375,30 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
-        -- Step 3: scan for missing
+        -- Step 3: scan for missing (non-shape-variant nodes only;
+        -- shape variants whose material has no main-view entry are
+        -- unreachable, not bugs. Also: if two non-shape-variant nodes
+        -- share a material (e.g. wool:white and default:white), only
+        -- one representative appears in the menu — the material is
+        -- covered.  The other is not "missing".)
         log("Checking for missing nodes...")
         local expected_count = 0
         local missing_scan_complete = true
         for node_name, def in pairs(minetest.registered_nodes) do
             local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
             if not hidden and not home_deco._banned[node_name] then
-                expected_count = expected_count + 1
-                if not occurrences[node_name] then
-                    if #missing < CAP then
-                        table.insert(missing, node_name)
-                        log("MISSING: " .. node_name)
-                    end
-                    if #missing >= CAP then
-                        missing_scan_complete = false
-                        break
+                if not is_shape_variant(node_name) then
+                    expected_count = expected_count + 1
+                    local mat = extract_material(node_name)
+                    if not material_covered[mat] then
+                        if #missing < CAP then
+                            table.insert(missing, node_name)
+                            log("MISSING (no main entry for material '" .. mat .. "'): " .. node_name)
+                        end
+                        if #missing >= CAP then
+                            missing_scan_complete = false
+                            break
+                        end
                     end
                 end
             end
