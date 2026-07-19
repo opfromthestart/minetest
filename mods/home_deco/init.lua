@@ -263,6 +263,7 @@ end
 local function get_node_list(base_name)
     local nodes = {}
     local best_per_material = {}  -- used only for main view (base_name == nil)
+    local shape_fallback = {}     -- shortest shape variant per material (fallback)
     for name, def in pairs(minetest.registered_nodes) do
         if not home_deco._banned[name] then
             local is_hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
@@ -275,7 +276,13 @@ local function get_node_list(base_name)
                         end
                     end
                 else
-                    if not is_shape_variant(name) then
+                    if is_shape_variant(name) then
+                        local mat = extract_material(name)
+                        local existing = shape_fallback[mat]
+                        if not existing or #name < #existing.name then
+                            shape_fallback[mat] = {name = name, desc = def.description or name}
+                        end
+                    else
                         local mat = extract_material(name)
                         local existing = best_per_material[mat]
                         if not existing or #name < #existing.name then
@@ -287,7 +294,13 @@ local function get_node_list(base_name)
         end
     end
     if not base_name then
-        -- Flatten deduplicated material groups into node list
+        -- Fill materials that have no non-shape representative with the
+        -- shortest shape variant for that material.
+        for mat, entry in pairs(shape_fallback) do
+            if not best_per_material[mat] then
+                best_per_material[mat] = entry
+            end
+        end
         for _, entry in pairs(best_per_material) do
             table.insert(nodes, entry)
         end
