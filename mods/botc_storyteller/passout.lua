@@ -59,10 +59,114 @@ local DEFAULT_TEAMS = {
 -- Face-down roles must NOT be put in the bag; the storyteller adds a
 -- placeholder token (what the player *thinks* they are) instead.
 local DEFAULT_FACE_DOWN = {
-    drunk = true,
-    lunatic = true,
+    drunk      = true,
+    lunatic    = true,
     marionette = true,
 }
+
+local REQUIRED_TOKENS = {
+    poisoner        = {"POISONED"},
+    innkeeper       = {"DRUNK"},
+    monk            = {"PROTECTED"},
+    devilsadvocate  = {"PROTECTED"},
+    sailor          = {"DRUNK"},
+    exorcist        = {"CHOSEN"},
+    fortune_teller  = {"RED HERRING"},
+    washerwoman     = {"SEEN", "WRONG"},
+    librarian       = {"SEEN", "WRONG"},
+    investigator    = {"SEEN", "WRONG"},
+    grandmother     = {"GRANDCHILD"},
+    dreamer         = {"DREAM"},
+    snakecharmer    = {"POISONED"},
+    pithag          = {"CHANGED"},
+    cerenovus       = {"MAD"},
+    witch           = {"CURSED"},
+    eviltwin        = {"TWIN"},
+    barber          = {"SWAPPED"},
+    sweetheart      = {"DRUNK"},
+    fanggu          = {"JUMP"},
+    vigormortis     = {"DEAD"},
+    nodashii        = {"POISONED"},
+}
+
+function botc.normalize_role_id(entry)
+    local id = type(entry) == "table" and entry.id or entry
+    if type(entry) == "table" and entry.name then
+        return entry.name:lower():gsub("[ -]", "_")
+    end
+    id = type(entry) == "table" and (entry.id or "unknown") or entry
+    return id:lower():gsub("[ -]", "_")
+end
+
+function botc.get_night_order_roles(day)
+    if not botc.ST.script_meta then return {} end
+    local order
+    if day == 1 then
+        order = botc.ST.script_meta.firstNight
+    else
+        order = botc.ST.script_meta.otherNight
+    end
+    if not order then return {} end
+    local roles = {}
+    local meta = {dusk=true, dawn=true, minioninfo=true, demoninfo=true}
+    for _, entry in ipairs(order) do
+        if not meta[entry] then
+            table.insert(roles, entry)
+        end
+    end
+    return roles
+end
+
+function botc.get_meta_steps(day)
+    if not botc.ST.script_meta then return {} end
+    local order
+    if day == 1 then
+        order = botc.ST.script_meta.firstNight
+    else
+        order = botc.ST.script_meta.otherNight
+    end
+    if not order then return {} end
+    local steps = {}
+    local meta = {dusk=true, dawn=true, minioninfo=true, demoninfo=true}
+    for _, entry in ipairs(order) do
+        if meta[entry] then
+            table.insert(steps, entry)
+        end
+    end
+    return steps
+end
+
+function botc.check_required_tokens()
+    local needed = {}
+    for name, data in pairs(botc.ST.roles) do
+        if data.alive then
+            local rid = botc.normalize_role_id(data.role)
+            local tokens = REQUIRED_TOKENS[rid]
+            if tokens then
+                for _, t in ipairs(tokens) do
+                    needed[t] = (needed[t] or 0) + 1
+                end
+            end
+        end
+    end
+    local present = {}
+    for _, data in pairs(botc.ST.roles) do
+        if data.markers then
+            for _, m in ipairs(data.markers) do
+                present[m] = (present[m] or 0) + 1
+            end
+        end
+    end
+    local missing = {}
+    for token, need in pairs(needed) do
+        local have = present[token] or 0
+        if have < need then
+            table.insert(missing, {token=token, needed=need, have=have})
+        end
+    end
+    if #missing == 0 then return nil end
+    return missing
+end
 
 function botc.is_face_down(role_entry)
     local id = type(role_entry) == "table" and role_entry.id or role_entry
@@ -122,7 +226,10 @@ function botc.load_script(filename)
     local roles = {}
     for _, entry in ipairs(script) do
         if type(entry) == "table" and entry.id == "_meta" then
-            -- skip metadata
+            botc.ST.script_meta = {
+                firstNight = entry.firstNight or {},
+                otherNight = entry.otherNight or {},
+            }
         else
             table.insert(roles, entry)
         end
