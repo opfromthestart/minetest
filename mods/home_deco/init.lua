@@ -343,23 +343,27 @@ minetest.register_chatcommand("home_deco_verify", {
             end
         end
 
-        -- Step 4: classify, stopping each list at a visible cap
+        -- Step 4: classify, breaking once any category reaches CAP
         local CAP = 30
         local missing, duplicated, unexpected = {}, {}, {}
+        local done = false
         for node_name in pairs(expected) do
             local count = occurrences[node_name] or 0
             if count == 0 then
-                if #missing < CAP then table.insert(missing, node_name) end
-                missing.overflow = (missing.overflow or 0) + 1
+                table.insert(missing, node_name)
+                if #missing >= CAP then done = true break end
             elseif count > 1 then
-                if #duplicated < CAP then table.insert(duplicated, node_name .. " (x" .. count .. ")") end
-                duplicated.overflow = (duplicated.overflow or 0) + 1
+                table.insert(duplicated, node_name .. " (x" .. count .. ")")
+                if #duplicated >= CAP then done = true break end
             end
+            if done then break end
         end
-        for node_name in pairs(occurrences) do
-            if not expected[node_name] then
-                if #unexpected < CAP then table.insert(unexpected, node_name) end
-                unexpected.overflow = (unexpected.overflow or 0) + 1
+        if not done then
+            for node_name in pairs(occurrences) do
+                if not expected[node_name] then
+                    table.insert(unexpected, node_name)
+                    if #unexpected >= CAP then break end
+                end
             end
         end
         table.sort(missing)
@@ -375,35 +379,26 @@ minetest.register_chatcommand("home_deco_verify", {
         end
 
         if #missing > 0 then
-            local tail = missing.overflow > CAP and (" + " .. (missing.overflow - CAP) .. " more (logged)") or ""
-            say("MISSING: " .. (missing.overflow) .. " total, showing first " .. #missing .. tail)
-            if #missing > 0 then
-                say("  " .. table.concat(missing, ", "))
-            end
+            say("MISSING: at least " .. #missing)
+            say("  " .. table.concat(missing, ", "))
         end
         if #duplicated > 0 then
-            local tail = duplicated.overflow > CAP and (" + " .. (duplicated.overflow - CAP) .. " more (logged)") or ""
-            say("DUPLICATED: " .. (duplicated.overflow) .. " total, showing first " .. #duplicated .. tail)
-            if #duplicated > 0 then
-                say("  " .. table.concat(duplicated, ", "))
-            end
+            say("DUPLICATED: at least " .. #duplicated)
+            say("  " .. table.concat(duplicated, ", "))
         end
         if #unexpected > 0 then
-            local tail = unexpected.overflow > CAP and (" + " .. (unexpected.overflow - CAP) .. " more (logged)") or ""
-            say("UNEXPECTED: " .. (unexpected.overflow) .. " total, showing first " .. #unexpected .. tail)
-            if #unexpected > 0 then
-                say("  " .. table.concat(unexpected, ", "))
-            end
+            say("UNEXPECTED: at least " .. #unexpected)
+            say("  " .. table.concat(unexpected, ", "))
         end
 
-        -- Always log full details for server logs
+        -- Always log summary for server logs
         minetest.log("action", "[home_deco] VERIFY "
             .. "expected=" .. expected_count
-            .. " missing=" .. (missing.overflow or 0)
-            .. " duplicated=" .. (duplicated.overflow or 0)
-            .. " unexpected=" .. (unexpected.overflow or 0))
+            .. " missing=" .. #missing
+            .. " duplicated=" .. #duplicated
+            .. " unexpected=" .. #unexpected)
 
-        return true, "See above for details (full list logged to console)"
+        return true, "See above for details"
     end,
 })
 
