@@ -187,6 +187,7 @@ local SHAPE_PREFIXES = {
     "inner_stair_", "outer_stair_",
     "fence_rail_", "fence_gate_", "fence_", "gate_",
     "mese_post_light_", "all_faces_",
+    "inner_", "outer_",
 }
 
 -- Manual overrides: if a specific item has no obvious base material
@@ -204,14 +205,14 @@ local SHAPE_SUFFIXES = {
     "_gate_closed", "_closed",
     "_mese_light",
     -- Shape/numeric
-    "_two_sides", "_alt_2", "_alt_1", "_alt",
+    "_two_sides", "_three_sides", "_three_quarter",
+    "_alt_2", "_alt_1", "_alt",
     "_outer", "_inner", "_half",
+    "_raised", "_cut", "_right", "_quarter", "_u",
     "_15", "_14", "_12", "_10", "_8", "_6", "_4", "_2", "_1",
-    -- Colors
-    "_dark_green", "_dark_grey",
-    "_black", "_blue", "_brown", "_cyan", "_green", "_grey", "_gray",
-    "_magenta", "_orange", "_pink", "_red", "_violet", "_purple",
-    "_white", "_yellow",
+    -- Colors (not stripped: colors are part of the material identity;
+    -- stripping them would misgroup e.g. stair_white under "" instead
+    -- of "white" and misclassify the base block wool:white as a shape.)
 }
 -- Must be sorted longest-first
 table.sort(SHAPE_SUFFIXES, function(a, b) return #a > #b end)
@@ -233,11 +234,16 @@ end
 
 local function extract_material(name)
     local base = name:gsub("^[^:]*:", "")
-    for _, prefix in ipairs(SHAPE_PREFIXES) do
-        local stripped = base:gsub("^" .. prefix, "")
-        if stripped ~= base then
-            base = stripped
-            break
+    local pchanged = true
+    while pchanged do
+        pchanged = false
+        for _, prefix in ipairs(SHAPE_PREFIXES) do
+            local stripped = base:gsub("^" .. prefix, "")
+            if stripped ~= base then
+                base = stripped
+                pchanged = true
+                break
+            end
         end
     end
     local changed = true
