@@ -67,6 +67,26 @@ minetest.register_chatcommand("botc_clear", {
     end,
 })
 
+minetest.register_chatcommand("botc_clearvotes", {
+    params = "",
+    description = "Remove all vote blocks from the world",
+    privs = {},
+    func = function(name, param)
+        local ok, err = require_st(name) if not ok then return false, err end
+        local count = 0
+        for phash, vb in pairs(botc.ST.vote_blocks) do
+            local pos = minetest.string_to_pos(phash)
+            if pos then
+                minetest.remove_node(pos)
+            end
+            count = count + 1
+        end
+        botc.ST.vote_blocks = {}
+        botc.save_state()
+        return true, count .. " vote blocks removed"
+    end,
+})
+
 minetest.register_chatcommand("botc_list", {
     params = "",
     description = "List all assigned players",
@@ -390,15 +410,29 @@ minetest.register_chatcommand("botc_refill", {
             if not inv then
                 return false, "That's not a container"
             end
+            local listname = "main"
+            local list = inv:get_list("main")
+            if not list then
+                local lists = inv:get_lists()
+                for k, v in pairs(lists) do
+                    if type(v) == "table" and #v > 0 then
+                        listname = k
+                        list = v
+                        break
+                    end
+                end
+                if not list then
+                    return false, "No inventory list found"
+                end
+            end
             local phash = minetest.pos_to_string(pointed)
             local snapshot = {}
-            local list = inv:get_list("main")
             for slot, item in ipairs(list) do
                 if not item:is_empty() then
                     snapshot[slot] = item:to_string()
                 end
             end
-            botc.ST.refill_chests[phash] = {pos = pointed, inv = snapshot}
+            botc.ST.refill_chests[phash] = {pos = pointed, inv = snapshot, listname = listname}
             botc.save_state()
             local item_count = 0
             for _ in pairs(snapshot) do item_count = item_count + 1 end
