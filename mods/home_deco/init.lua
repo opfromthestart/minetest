@@ -289,116 +289,110 @@ minetest.register_chatcommand("home_deco_verify", {
     description = "Verify every node appears in exactly one menu (main or variant)",
     privs = {server = true},
     func = function(name, param)
-        local player = minetest.get_player_by_name(name)
-        if not player then return false, "Player not found" end
-        local function say(msg)
-            minetest.chat_send_player(name, msg)
+        local function log(msg)
+            minetest.log("action", "[home_deco_verify] " .. msg)
         end
 
-        local occurrences = {}
-        local function record(node_list)
-            for _, entry in ipairs(node_list) do
-                occurrences[entry.name] = (occurrences[entry.name] or 0) + 1
-            end
-        end
-
-        -- Step 1: build main view
-        say("[home_deco] Building main view...")
-        local main_nodes = get_node_list(nil)
-        record(main_nodes)
-        say("[home_deco] Main view: " .. #main_nodes .. " items")
-
-        -- Step 2: build variant pages for each reachable material
-        local materials = {}
-        local material_count = 0
-        for _, entry in ipairs(main_nodes) do
-            local mat = extract_material(entry.name)
-            if not materials[mat] then
-                materials[mat] = true
-                material_count = material_count + 1
-            end
-        end
-        say("[home_deco] Building " .. material_count .. " variant pages...")
-        local prog = 0
-        for material in pairs(materials) do
-            record(get_node_list(material))
-            prog = prog + 1
-            if prog % 100 == 0 then
-                say("[home_deco] ... " .. prog .. "/" .. material_count)
-            end
-        end
-        if material_count > 0 and prog % 100 ~= 0 then
-            say("[home_deco] ... " .. prog .. "/" .. material_count)
-        end
-
-        -- Step 3: build expected set
-        say("[home_deco] Checking results...")
-        local expected = {}
-        local expected_count = 0
-        for node_name, def in pairs(minetest.registered_nodes) do
-            local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
-            if not hidden and not home_deco._banned[node_name] then
-                expected[node_name] = true
-                expected_count = expected_count + 1
-            end
-        end
-
-        -- Step 4: classify, breaking once any category reaches CAP
         local CAP = 30
         local missing, duplicated, unexpected = {}, {}, {}
-        local done = false
-        for node_name in pairs(expected) do
-            local count = occurrences[node_name] or 0
-            if count == 0 then
-                table.insert(missing, node_name)
-                if #missing >= CAP then done = true break end
-            elseif count > 1 then
-                table.insert(duplicated, node_name .. " (x" .. count .. ")")
-                if #duplicated >= CAP then done = true break end
+        local occurrences = {}
+        local function record(node_name)
+            occurrences[node_name] = (occurrences[node_name] or 0) + 1
+            local count = occurrences[node_name]
+            if count == 2 and #duplicated < CAP then
+                table.insert(duplicated, node_name)
+                log("DUPLICATED: " .. node_name)
             end
-            if done then break end
-        end
-        if not done then
-            for node_name in pairs(occurrences) do
-                if not expected[node_name] then
-                    table.insert(unexpected, node_name)
-                    if #unexpected >= CAP then break end
+            if #unexpected < CAP then
+                local def = minetest.registered_nodes[node_name]
+                if def then
+                    local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
+                    if hidden then
+                        table.insert(unexpected, node_name .. " (hidden)")
+                        log("UNEXPECTED: " .. node_name .. " (hidden)")
+                    elseif home_deco._banned[node_name] then
+                        table.insert(unexpected, node_name .. " (banned)")
+                        log("UNEXPECTED: " .. node_name .. " (banned)")
+                    end
                 end
             end
         end
+
+        -- Step 1: build main view, logging duplicates/unexpected as found
+        log("Building main view...")
+        local main_nodes = get_node_list(nil)
+        for _, entry in ipairs(main_nodes) do
+            record(entry.name)
+        end
+        log("Main view: " .. #main_nodes .. " items")
+
+        -- Step 2: build variant pages, logging as found
+        local materials = {}
+        for _, entry in ipairs(main_nodes) do
+            materials[extract_material(entry.name)] = true
+        end
+        local material_count = 0
+        for _ in pairs(materials) do material_count = material_count + 1 end
+        log("Building " .. material_count .. " variant pages...")
+        local prog = 0
+        for material in pairs(materials) do
+            local nodes = get_node_list(material)
+            for _, entry in ipairs(nodes) do
+                record(entry.name)
+            end
+            prog = prog + 1
+            if prog % 100 == 0 then
+                log("... " .. prog .. "/" .. material_count)
+            end
+            if #duplicated + #unexpected >= CAP then
+                log("Stopping variant scan: " .. (#duplicated + #unexpected) .. " issues found, skipping " .. (material_count - prog) .. " remaining materials")
+                break
+            end
+        end
+        if material_count > 0 and prog % 100 ~= 0 and #duplicated + #unexpected < CAP then
+            log("... " .. prog .. "/" .. material_count)
+        end
+
+        -- Step 3: scan for missing (requires full expected set)
+        log("Checking for missing nodes...")
+        local expected_count = 0
+        local missing_scan_complete = true
+        for node_name, def in pairs(minetest.registered_nodes) do
+            local hidden = def.groups.not_in_creative_inventory and def.groups.not_in_creative_inventory ~= 0
+            if not hidden and not home_deco._banned[node_name] then
+                expected_count = expected_count + 1
+                if not occurrences[node_name] then
+                    if #missing < CAP then
+                        table.insert(missing, node_name)
+                        log("MISSING: " .. node_name)
+                    end
+                    if #missing >= CAP then
+                        missing_scan_complete = false
+                        break
+                    end
+                end
+            end
+        end
+        if #missing >= CAP then
+            log("Missing list capped at " .. CAP)
+        end
+
         table.sort(missing)
         table.sort(duplicated)
         table.sort(unexpected)
 
-        -- Step 5: report
-        say("Summary: expected=" .. expected_count .. " main=" .. #main_nodes .. " variant_materials=" .. material_count)
-
-        if #missing == 0 and #duplicated == 0 and #unexpected == 0 then
-            say("OK: every node appears in exactly one menu")
-            return true
-        end
-
-        if #missing > 0 then
-            say("MISSING: at least " .. #missing)
-            say("  " .. table.concat(missing, ", "))
-        end
-        if #duplicated > 0 then
-            say("DUPLICATED: at least " .. #duplicated)
-            say("  " .. table.concat(duplicated, ", "))
-        end
-        if #unexpected > 0 then
-            say("UNEXPECTED: at least " .. #unexpected)
-            say("  " .. table.concat(unexpected, ", "))
-        end
-
-        -- Always log summary for server logs
-        minetest.log("action", "[home_deco] VERIFY "
-            .. "expected=" .. expected_count
+        local scan_status = missing_scan_complete and "" or " (scan incomplete)"
+        log("VERIFY done" .. scan_status .. ": expected=" .. expected_count
+            .. " main=" .. #main_nodes
+            .. " variant_materials=" .. material_count
             .. " missing=" .. #missing
             .. " duplicated=" .. #duplicated
             .. " unexpected=" .. #unexpected)
 
-        return true, "See above for details"
+        if #missing == 0 and #duplicated == 0 and #unexpected == 0 then
+            return true, "OK: every node appears in exactly one menu"
+        end
+        return true, "missing=" .. #missing .. " duplicated=" .. #duplicated .. " unexpected=" .. #unexpected .. " (details in server console)"
     end,
 })
 
